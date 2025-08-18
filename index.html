@@ -62,8 +62,9 @@
                 <div id="sidebar-badge-container" class="grid grid-cols-4 gap-4 text-center"></div>
             </div>
         </div>
-        <div class="mt-auto">
-             <button id="reset-day" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg">End Day & Evaluate</button>
+        <div class="mt-auto pt-6 border-t border-slate-200 dark:border-slate-700">
+             <button id="reset-karma-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">Reset Accumulated Karma</button>
+             <button id="reset-day" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg mt-4">End Day & Evaluate</button>
         </div>
     </div>
 
@@ -172,6 +173,7 @@
         const sidebarBadgeContainer = document.getElementById('sidebar-badge-container');
         const addGoalBtn = document.getElementById('add-goal-btn');
         const goalNameInput = document.getElementById('goal-name-input');
+        const resetKarmaBtn = document.getElementById('reset-karma-btn');
         // Modals
         const addKarmaModal = document.getElementById('add-karma-modal');
         const addKarmaForm = document.getElementById('add-karma-form');
@@ -478,6 +480,22 @@
 
         // --- End of Day Logic ---
         function endDay() {
+            // Add penalty for any uncompleted positive tasks
+            let missedTaskCount = 0;
+            state.goals.forEach(goal => {
+                goal.karmas.forEach(karma => {
+                    if (karma.type === 'karma' && !karma.completed) {
+                        missedTaskCount++;
+                    }
+                });
+            });
+
+            if (missedTaskCount > 0) {
+                const penalty = missedTaskCount * KARMA_POINTS;
+                state.dailyKarma -= penalty;
+                showMessage(`${missedTaskCount} task(s) missed. -${penalty} Karma.`, 'error');
+            }
+
             if (state.dailyKarma < 0) {
                 prayashchitModal.classList.remove('hidden');
                 prayashchitOptionsEl.innerHTML = '';
@@ -561,6 +579,34 @@
                 badgeModal.classList.add('hidden');
             }, 200);
         }
+
+        function handleResetKarma() {
+            if (resetKarmaBtn.dataset.confirm === 'true') {
+                state.totalKarma = 0;
+                showMessage('Your accumulated Karma has been reset.', 'info');
+                saveState();
+                // Reset button state
+                resetKarmaBtn.textContent = 'Reset Accumulated Karma';
+                resetKarmaBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                resetKarmaBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
+                delete resetKarmaBtn.dataset.confirm;
+            } else {
+                // First click, ask for confirmation
+                resetKarmaBtn.textContent = 'Confirm Reset?';
+                resetKarmaBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
+                resetKarmaBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                resetKarmaBtn.dataset.confirm = 'true';
+                // Set a timeout to revert the button if not clicked again
+                setTimeout(() => {
+                    if (resetKarmaBtn.dataset.confirm === 'true') {
+                        resetKarmaBtn.textContent = 'Reset Accumulated Karma';
+                        resetKarmaBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                        resetKarmaBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
+                        delete resetKarmaBtn.dataset.confirm;
+                    }
+                }, 3000);
+            }
+        }
         
         // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -585,6 +631,7 @@
         sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
         addGoalBtn.addEventListener('click', addGoal);
         sidebarGoalList.addEventListener('click', handleDeleteGoal);
+        resetKarmaBtn.addEventListener('click', handleResetKarma);
         addKarmaBtn.addEventListener('click', openAddKarmaModal);
         addKarmaForm.addEventListener('submit', handleAddKarma);
         cancelAddKarmaBtn.addEventListener('click', () => addKarmaModal.classList.add('hidden'));
