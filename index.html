@@ -364,13 +364,26 @@
         }
 
         function handleTaskClick(e) {
+            // If a button or the fire overlay was clicked, do nothing and let other handlers take over.
+            if (e.target.closest('button') || e.target.closest('.fire-overlay')) {
+                return;
+            }
+
             const karmaItem = e.target.closest('.karma-item');
             if (!karmaItem) return;
 
-            // Remove any existing fire overlays
-            document.querySelectorAll('.fire-overlay').forEach(el => el.remove());
+            // Remove any existing fire overlays from other tasks
+            document.querySelectorAll('.fire-overlay').forEach(el => {
+                if (el.parentElement !== karmaItem) {
+                    el.remove();
+                }
+            });
 
-            if (karmaItem.dataset.type === 'karma') {
+            // Toggle fire overlay on the current task
+            const existingOverlay = karmaItem.querySelector('.fire-overlay');
+            if (existingOverlay) {
+                existingOverlay.remove();
+            } else if (karmaItem.dataset.type === 'karma') {
                 const fireOverlay = document.createElement('div');
                 fireOverlay.className = 'fire-overlay';
                 fireOverlay.innerHTML = `<i class="fas fa-fire text-orange-500 text-4xl"></i>`;
@@ -412,7 +425,9 @@
             const goalId = Number(karmaItem.dataset.goalId);
             const karmaId = Number(karmaItem.dataset.karmaId);
             const goal = state.goals.find(g => g.id === goalId);
+             if (!goal) return;
             const karma = goal.karmas.find(k => k.id === karmaId);
+            if (!karma) return;
 
             if (logVikarmaBtn) {
                 if (karma.completed) return;
@@ -421,6 +436,7 @@
                 state.totalKarma -= karma.points;
                 showMessage(`Vikarma '${karma.name}' logged. -${karma.points} Karma.`, 'error');
                 karmaItem.classList.add('completed');
+                setTimeout(() => saveState(), 500);
             } else if (cheatBtn) {
                 if (karma.completed) return;
                 karma.completed = true;
@@ -428,12 +444,12 @@
                 state.totalKarma += CHEAT_PENALTY;
                 showMessage(`Cheating has consequences. ${CHEAT_PENALTY} Karma.`, 'error');
                 karmaItem.classList.add('completed');
+                setTimeout(() => saveState(), 500);
             } else if (deleteKarmaBtn) {
                 goal.karmas = goal.karmas.filter(k => k.id !== karmaId);
                 showMessage(`Action removed.`, 'info');
+                saveState();
             }
-            
-            setTimeout(() => saveState(), 500);
         }
         
         function handleDeleteGoal(e) {
