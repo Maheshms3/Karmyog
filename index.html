@@ -21,6 +21,11 @@
         .badge:hover { transform: scale(1.1); }
         #sidebar { transition: transform 0.3s ease-in-out; }
         #sidebar-overlay { transition: opacity 0.3s ease-in-out; }
+        /* Distinct Task Colors */
+        .vikarma-card { background-color: #fef2f2; } /* red-50 */
+        .dark .vikarma-card { background-color: rgba(153, 27, 27, 0.2); } /* dark:bg-red-900/20 */
+        .prayashchit-card { background-color: #fffbeb; } /* amber-50 */
+        .dark .prayashchit-card { background-color: rgba(180, 83, 9, 0.2); } /* dark:bg-amber-900/20 */
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
@@ -188,14 +193,14 @@
         const KARMA_POINTS = 1;
         const SATATYA_REWARD = 2;
         const SATATYA_PENALTY = -3;
-        const CHEAT_PENALTY = -3;
+        const PRAYASHCHIT_PENALTY = -5;
         let state = {};
         let unsubscribe;
 
-        const defaultState = { totalKarma: 0, dailyKarma: 0, goals: [], unlockedBadges: [] };
+        const defaultState = { totalKarma: 0, dailyKarma: 0, goals: [], unlockedBadges: [], activePrayashchit: null };
         const badges = [ { days: 9, name: 'Arjuna', icon: 'fa-user-graduate', color: 'text-slate-500' }, { days: 18, name: 'Sthitaprajña', icon: 'fa-brain', color: 'text-sky-500' }, { days: 27, name: 'Yuktah', icon: 'fa-link', color: 'text-blue-500' }, { days: 36, name: 'Niyatam', icon: 'fa-calendar-check', color: 'text-indigo-500' }, { days: 45, name: 'Akartā', icon: 'fa-hand-paper', color: 'text-purple-500' }, { days: 54, name: 'Tyāgī', icon: 'fa-leaf', color: 'text-emerald-500' }, { days: 63, name: 'Samatvam', icon: 'fa-scale-balanced', color: 'text-lime-500' }, { days: 72, name: 'Bhakta', icon: 'fa-heart', color: 'text-rose-500' }, { days: 81, name: 'Jñānī', icon: 'fa-book-open', color: 'text-amber-500' }, { days: 90, name: 'Yogī', icon: 'fa-om', color: 'text-orange-500' }, { days: 99, name: 'Brahmabhūta', icon: 'fa-star-of-life', color: 'text-yellow-400' }, { days: 108, name: 'Ātmarāma', icon: 'fa-sun', color: 'text-yellow-300' } ];
         const gitaQuotes = [ "You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions. - 2.47", "Perform your obligatory duty, because action is indeed better than inaction. - 3.8", "The wise see inaction in action and action in inaction. - 4.18", "One who performs their duty without attachment, surrendering the results to the Supreme Lord, is unaffected by sinful action. - 5.10", "It is better to live your own destiny imperfectly than to live an imitation of somebody else's life with perfection. - 3.35" ];
-        const prayashchitList = [ "Take a cold water bath tomorrow morning.", "Avoid all sugar and sweets for the next 24 hours.", "Use stairs instead of the elevator/escalator for the entire day.", "Dedicate 30 minutes to selfless service (seva) for someone else.", "Maintain silence (mauna) for a period of 2 hours." ];
+        const prayashchitList = [ "Take a cold water bath", "Avoid all sugar for 24 hours", "Use stairs instead of the lift", "30 minutes of selfless service (seva)", "Maintain silence for 2 hours" ];
 
         // --- Firebase Auth & Data ---
         auth.onAuthStateChanged(user => {
@@ -215,6 +220,7 @@
             const docRef = db.collection('users').doc(userId);
             unsubscribe = docRef.onSnapshot(doc => {
                 state = doc.exists ? doc.data() : { ...defaultState };
+                if (!state.activePrayashchit) state.activePrayashchit = null; // Ensure property exists
                 if (!doc.exists) saveState();
                 renderAll();
             });
@@ -258,11 +264,32 @@
         function renderTaskList() {
             taskList.innerHTML = '';
             let hasTasks = false;
+
+            // Render Prayashchit task first if it exists
+            if (state.activePrayashchit && !state.activePrayashchit.completed) {
+                hasTasks = true;
+                const li = document.createElement('li');
+                li.className = 'karma-item prayashchit-card bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md';
+                li.dataset.type = 'prayashchit';
+                li.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-person-praying text-amber-500 mr-4"></i>
+                            <div>
+                                <p class="font-semibold text-lg">${state.activePrayashchit.name}</p>
+                                <p class="text-xs text-slate-400">Prayashchit (Penance)</p>
+                            </div>
+                        </div>
+                        <button class="log-prayashchit-btn text-xs bg-amber-500 text-white px-3 py-1 rounded-md mx-2">Complete</button>
+                    </div>`;
+                taskList.appendChild(li);
+            }
+
             state.goals.forEach(goal => {
                 goal.karmas.filter(k => !k.completed).forEach(karma => {
                     hasTasks = true;
                     const li = document.createElement('li');
-                    li.className = 'karma-item bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md';
+                    li.className = `karma-item bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md ${karma.type === 'vikarma' ? 'vikarma-card' : ''}`;
                     li.dataset.goalId = goal.id;
                     li.dataset.karmaId = karma.id;
                     li.dataset.type = karma.type;
@@ -273,14 +300,13 @@
                         li.innerHTML = `
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
-                                    <i class="fas fa-hand-paper text-indigo-400 mr-4"></i>
+                                    <i class="fas fa-leaf text-green-500 mr-4"></i>
                                     <div>
                                         <p class="font-semibold text-lg">${karma.name}</p>
                                         <p class="text-xs text-slate-400">${goal.name}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center">
-                                    <button class="cheat-btn text-xs bg-yellow-400 text-yellow-800 px-2 py-1 rounded" title="Cheat (${CHEAT_PENALTY} Karma)"><i class="fas fa-user-secret"></i></button>
                                     <span class="font-bold text-green-500 mx-2">+${KARMA_POINTS}</span>
                                     ${deleteBtnHTML}
                                 </div>
@@ -289,7 +315,7 @@
                         li.innerHTML = `
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
-                                    <i class="fas fa-skull-crossbones text-red-400 mr-4"></i>
+                                    <i class="fas fa-leaf text-slate-400 mr-4"></i>
                                     <div>
                                         <p class="font-semibold text-lg">${karma.name}</p>
                                         <p class="text-xs text-slate-400">${goal.name}</p>
@@ -388,7 +414,7 @@
             }
 
             const karmaItem = e.target.closest('.karma-item');
-            if (!karmaItem) return;
+            if (!karmaItem || karmaItem.dataset.type === 'prayashchit') return;
             
             document.querySelectorAll('.fire-overlay').forEach(el => {
                 if (el.parentElement !== karmaItem) {
@@ -432,16 +458,27 @@
 
         function handleActionButtons(e) {
             const logVikarmaBtn = e.target.closest('.log-vikarma-btn');
-            const cheatBtn = e.target.closest('.cheat-btn');
             const deleteKarmaBtn = e.target.closest('.delete-karma-btn');
+            const logPrayashchitBtn = e.target.closest('.log-prayashchit-btn');
 
-            if (!logVikarmaBtn && !cheatBtn && !deleteKarmaBtn) return;
+            if (!logVikarmaBtn && !deleteKarmaBtn && !logPrayashchitBtn) return;
             
-            const karmaItem = e.target.closest('li[data-karma-id]');
+            const karmaItem = e.target.closest('li[data-karma-id], li[data-type="prayashchit"]');
+            
+            if (logPrayashchitBtn) {
+                if (state.activePrayashchit && !state.activePrayashchit.completed) {
+                    state.activePrayashchit.completed = true;
+                    showMessage('Prayashchit completed. Balance is restored.', 'success');
+                    karmaItem.classList.add('completed');
+                    setTimeout(() => saveState(), 500);
+                }
+                return;
+            }
+
             const goalId = Number(karmaItem.dataset.goalId);
             const karmaId = Number(karmaItem.dataset.karmaId);
             const goal = state.goals.find(g => g.id === goalId);
-             if (!goal) return;
+            if (!goal) return;
             const karma = goal.karmas.find(k => k.id === karmaId);
             if (!karma) return;
 
@@ -451,14 +488,6 @@
                 state.dailyKarma -= karma.points;
                 state.totalKarma -= karma.points;
                 showMessage(`Vikarma '${karma.name}' logged. -${karma.points} Karma.`, 'error');
-                karmaItem.classList.add('completed');
-                setTimeout(() => saveState(), 500);
-            } else if (cheatBtn) {
-                if (karma.completed) return;
-                karma.completed = true;
-                state.dailyKarma += CHEAT_PENALTY;
-                state.totalKarma += CHEAT_PENALTY;
-                showMessage(`Cheating has consequences. ${CHEAT_PENALTY} Karma.`, 'error');
                 karmaItem.classList.add('completed');
                 setTimeout(() => saveState(), 500);
             } else if (deleteKarmaBtn) {
@@ -480,7 +509,12 @@
 
         // --- End of Day Logic ---
         function endDay() {
-            // Add penalty for any uncompleted positive tasks
+            if (state.activePrayashchit && !state.activePrayashchit.completed) {
+                state.dailyKarma += PRAYASHCHIT_PENALTY;
+                showMessage(`Prayashchit missed. ${PRAYASHCHIT_PENALTY} Karma.`, 'error');
+            }
+            state.activePrayashchit = null;
+
             let missedTaskCount = 0;
             state.goals.forEach(goal => {
                 goal.karmas.forEach(karma => {
@@ -508,6 +542,13 @@
         }
         
         function evaluateSatatya(penanceCompleted = false) {
+            if (penanceCompleted) {
+                const selectedOption = document.querySelector('input[name="prayashchit"]:checked');
+                if(selectedOption) {
+                    state.activePrayashchit = { name: selectedOption.value, completed: false };
+                }
+            }
+
             state.goals.forEach(goal => {
                 if (goal.completedToday) {
                     goal.satatya++;
