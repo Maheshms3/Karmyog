@@ -26,6 +26,7 @@
         .dark .vikarma-card { background-color: rgba(153, 27, 27, 0.2); } /* dark:bg-red-900/20 */
         .prayashchit-card { background-color: #fffbeb; } /* amber-50 */
         .dark .prayashchit-card { background-color: rgba(180, 83, 9, 0.2); } /* dark:bg-amber-900/20 */
+        .dragging { opacity: 0.5; }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
@@ -220,7 +221,10 @@
             const docRef = db.collection('users').doc(userId);
             unsubscribe = docRef.onSnapshot(doc => {
                 state = doc.exists ? doc.data() : { ...defaultState };
-                if (!state.activePrayashchit) state.activePrayashchit = null; // Ensure property exists
+                if (!state.activePrayashchit) state.activePrayashchit = null;
+                if (!state.goals.every(g => 'totalPracticeKarma' in g)) {
+                    state.goals.forEach(g => { if (!('totalPracticeKarma' in g)) g.totalPracticeKarma = 0; });
+                }
                 if (!doc.exists) saveState();
                 renderAll();
             });
@@ -248,10 +252,11 @@
                     sidebarGoalList.innerHTML += `
                         <div class="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg">
                             <span class="font-semibold">${goal.name}</span>
-                            <div class="flex items-center space-x-3">
-                                <span class="font-bold"><i class="fas fa-infinity text-indigo-500"></i> ${goal.satatya}</span>
-                                <button class="delete-goal-btn text-red-400 hover:text-red-600" data-goal-id="${goal.id}"><i class="fas fa-trash"></i></button>
+                            <div class="text-right">
+                                <p class="font-bold"><i class="fas fa-infinity text-indigo-500"></i> ${goal.satatya}</p>
+                                <p class="text-xs text-slate-400">Karma: ${goal.totalPracticeKarma || 0}</p>
                             </div>
+                            <button class="delete-goal-btn text-red-400 hover:text-red-600 ml-2" data-goal-id="${goal.id}"><i class="fas fa-trash"></i></button>
                         </div>
                     `;
                 });
@@ -263,47 +268,59 @@
 
         function renderTaskList() {
             taskList.innerHTML = '';
-            let hasTasks = false;
+            let flatTaskList = [];
 
-            // Render Prayashchit task first if it exists
             if (state.activePrayashchit && !state.activePrayashchit.completed) {
-                hasTasks = true;
-                const li = document.createElement('li');
-                li.className = 'karma-item prayashchit-card bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md';
-                li.dataset.type = 'prayashchit';
-                li.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <i class="fas fa-person-praying text-amber-500 mr-4"></i>
-                            <div>
-                                <p class="font-semibold text-lg">${state.activePrayashchit.name}</p>
-                                <p class="text-xs text-slate-400">Prayashchit (Penance)</p>
-                            </div>
-                        </div>
-                        <button class="log-prayashchit-btn text-xs bg-amber-500 text-white px-3 py-1 rounded-md mx-2">Complete</button>
-                    </div>`;
-                taskList.appendChild(li);
+                flatTaskList.push({ ...state.activePrayashchit, type: 'prayashchit', order: 0 });
             }
 
             state.goals.forEach(goal => {
                 goal.karmas.filter(k => !k.completed).forEach(karma => {
-                    hasTasks = true;
-                    const li = document.createElement('li');
-                    li.className = `karma-item bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md ${karma.type === 'vikarma' ? 'vikarma-card' : ''}`;
-                    li.dataset.goalId = goal.id;
-                    li.dataset.karmaId = karma.id;
-                    li.dataset.type = karma.type;
+                    flatTaskList.push({ ...karma, goalId: goal.id, goalName: goal.name });
+                });
+            });
+
+            flatTaskList.sort((a, b) => a.order - b.order);
+
+            if (flatTaskList.length === 0) {
+                taskList.innerHTML = `<p class="text-center text-slate-500 italic py-8">All actions for today are complete. Add more below.</p>`;
+                return;
+            }
+
+            flatTaskList.forEach(task => {
+                const li = document.createElement('li');
+                li.className = 'karma-item bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md';
+                li.dataset.type = task.type;
+                li.draggable = true;
+
+                if (task.type === 'prayashchit') {
+                    li.classList.add('prayashchit-card');
+                    li.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-person-praying text-amber-500 mr-4"></i>
+                                <div>
+                                    <p class="font-semibold text-lg">${task.name}</p>
+                                    <p class="text-xs text-slate-400">Prayashchit (Penance)</p>
+                                </div>
+                            </div>
+                            <button class="log-prayashchit-btn text-xs bg-amber-500 text-white px-3 py-1 rounded-md mx-2">Complete</button>
+                        </div>`;
+                } else {
+                    li.dataset.goalId = task.goalId;
+                    li.dataset.karmaId = task.id;
+                    if (task.type === 'vikarma') li.classList.add('vikarma-card');
                     
                     const deleteBtnHTML = `<button class="delete-karma-btn text-slate-400 hover:text-red-500 text-xs ml-2"><i class="fas fa-times"></i></button>`;
 
-                    if (karma.type === 'karma') {
+                    if (task.type === 'karma') {
                         li.innerHTML = `
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
                                     <i class="fas fa-leaf text-green-500 mr-4"></i>
                                     <div>
-                                        <p class="font-semibold text-lg">${karma.name}</p>
-                                        <p class="text-xs text-slate-400">${goal.name}</p>
+                                        <p class="font-semibold text-lg">${task.name}</p>
+                                        <p class="text-xs text-slate-400">${task.goalName}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center">
@@ -317,8 +334,8 @@
                                 <div class="flex items-center">
                                     <i class="fas fa-leaf text-slate-400 mr-4"></i>
                                     <div>
-                                        <p class="font-semibold text-lg">${karma.name}</p>
-                                        <p class="text-xs text-slate-400">${goal.name}</p>
+                                        <p class="font-semibold text-lg">${task.name}</p>
+                                        <p class="text-xs text-slate-400">${task.goalName}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center">
@@ -328,12 +345,9 @@
                                 </div>
                             </div>`;
                     }
-                    taskList.appendChild(li);
-                });
+                }
+                taskList.appendChild(li);
             });
-            if (!hasTasks) {
-                taskList.innerHTML = `<p class="text-center text-slate-500 italic py-8">All actions for today are complete. Add more below.</p>`;
-            }
         }
 
         function renderBadges() {
@@ -344,9 +358,7 @@
                 badgeEl.className = `badge p-2 rounded-lg cursor-pointer ${isUnlocked ? 'unlocked' : 'locked'}`;
                 badgeEl.title = isUnlocked ? `${badge.name} - Unlocked!` : `${badge.name} - Locked (Requires ${badge.days} days of Sātatya)`;
                 badgeEl.dataset.badgeName = badge.name;
-                badgeEl.innerHTML = `
-                    <i class="fas ${badge.icon} text-3xl ${isUnlocked ? badge.color : 'text-slate-400'}"></i>
-                `;
+                badgeEl.innerHTML = `<i class="fas ${badge.icon} text-3xl ${isUnlocked ? badge.color : 'text-slate-400'}"></i>`;
                 sidebarBadgeContainer.appendChild(badgeEl);
             });
         }
@@ -373,7 +385,7 @@
         function addGoal() {
             const name = goalNameInput.value.trim();
             if (!name) { showMessage("Practice name cannot be empty.", "error"); return; }
-            state.goals.push({ id: Date.now(), name, satatya: 0, karmas: [], completedToday: false });
+            state.goals.push({ id: Date.now(), name, satatya: 0, totalPracticeKarma: 0, karmas: [], completedToday: false });
             goalNameInput.value = '';
             saveState();
         }
@@ -395,7 +407,7 @@
             const type = document.getElementById('karma-type').value;
             if (!name) { showMessage("Please provide a valid name.", "error"); return; }
             const goal = state.goals.find(d => d.id === goalId);
-            goal.karmas.push({ id: Date.now(), name, points: KARMA_POINTS, type, completed: false });
+            goal.karmas.push({ id: Date.now(), name, points: KARMA_POINTS, type, completed: false, order: Date.now() });
             addKarmaModal.classList.add('hidden');
             saveState();
         }
@@ -404,22 +416,14 @@
             const fireOverlay = e.target.closest('.fire-overlay');
             const actionButton = e.target.closest('button');
 
-            if (fireOverlay) {
-                handleKarmaCompletion(e);
-                return;
-            }
-            if (actionButton) {
-                handleActionButtons(e);
-                return;
-            }
+            if (fireOverlay) { handleKarmaCompletion(e); return; }
+            if (actionButton) { handleActionButtons(e); return; }
 
             const karmaItem = e.target.closest('.karma-item');
             if (!karmaItem || karmaItem.dataset.type === 'prayashchit') return;
             
             document.querySelectorAll('.fire-overlay').forEach(el => {
-                if (el.parentElement !== karmaItem) {
-                    el.remove();
-                }
+                if (el.parentElement !== karmaItem) el.remove();
             });
 
             const existingOverlay = karmaItem.querySelector('.fire-overlay');
@@ -447,7 +451,7 @@
                 karma.completed = true;
                 goal.completedToday = true;
                 state.dailyKarma += karma.points;
-                state.totalKarma += karma.points;
+                goal.totalPracticeKarma += karma.points;
                 
                 showMessage(`Karma '${karma.name}' offered! +${karma.points}`, "success");
                 
@@ -486,7 +490,7 @@
                 if (karma.completed) return;
                 karma.completed = true;
                 state.dailyKarma -= karma.points;
-                state.totalKarma -= karma.points;
+                goal.totalPracticeKarma -= karma.points;
                 showMessage(`Vikarma '${karma.name}' logged. -${karma.points} Karma.`, 'error');
                 karmaItem.classList.add('completed');
                 setTimeout(() => saveState(), 500);
@@ -509,8 +513,10 @@
 
         // --- End of Day Logic ---
         function endDay() {
+            let finalDailyKarma = state.dailyKarma;
+
             if (state.activePrayashchit && !state.activePrayashchit.completed) {
-                state.dailyKarma += PRAYASHCHIT_PENALTY;
+                finalDailyKarma += PRAYASHCHIT_PENALTY;
                 showMessage(`Prayashchit missed. ${PRAYASHCHIT_PENALTY} Karma.`, 'error');
             }
             state.activePrayashchit = null;
@@ -520,39 +526,22 @@
                 goal.karmas.forEach(karma => {
                     if (karma.type === 'karma' && !karma.completed) {
                         missedTaskCount++;
+                        goal.totalPracticeKarma -= KARMA_POINTS; 
                     }
                 });
             });
 
             if (missedTaskCount > 0) {
                 const penalty = missedTaskCount * KARMA_POINTS;
-                state.dailyKarma -= penalty;
+                finalDailyKarma -= penalty;
                 showMessage(`${missedTaskCount} task(s) missed. -${penalty} Karma.`, 'error');
-            }
-
-            if (state.dailyKarma < 0) {
-                prayashchitModal.classList.remove('hidden');
-                prayashchitOptionsEl.innerHTML = '';
-                [...prayashchitList].sort(() => 0.5 - Math.random()).slice(0, 3).forEach((p, i) => {
-                    prayashchitOptionsEl.innerHTML += `<label class="flex items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg"><input type="radio" name="prayashchit" value="${p}" class="mr-3" ${i===0 ? 'checked' : ''}>${p}</label>`;
-                });
-            } else {
-                evaluateSatatya();
-            }
-        }
-        
-        function evaluateSatatya(penanceCompleted = false) {
-            if (penanceCompleted) {
-                const selectedOption = document.querySelector('input[name="prayashchit"]:checked');
-                if(selectedOption) {
-                    state.activePrayashchit = { name: selectedOption.value, completed: false };
-                }
             }
 
             state.goals.forEach(goal => {
                 if (goal.completedToday) {
                     goal.satatya++;
-                    state.dailyKarma += SATATYA_REWARD;
+                    finalDailyKarma += SATATYA_REWARD;
+                    goal.totalPracticeKarma += SATATYA_REWARD;
                     badges.forEach(badge => {
                         if (goal.satatya >= badge.days && !state.unlockedBadges.includes(badge.name)) {
                             state.unlockedBadges.push(badge.name);
@@ -561,25 +550,99 @@
                     });
                 } else {
                     if (goal.satatya > 0) {
-                        state.dailyKarma += SATATYA_PENALTY;
+                        finalDailyKarma += SATATYA_PENALTY;
+                        goal.totalPracticeKarma += SATATYA_PENALTY;
                     }
                     goal.satatya = 0; 
                 }
+            });
+
+            if (finalDailyKarma < 0) {
+                prayashchitModal.classList.remove('hidden');
+                prayashchitOptionsEl.innerHTML = '';
+                [...prayashchitList].sort(() => 0.5 - Math.random()).slice(0, 3).forEach((p, i) => {
+                    prayashchitOptionsEl.innerHTML += `<label class="flex items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg"><input type="radio" name="prayashchit" value="${p}" class="mr-3" ${i===0 ? 'checked' : ''}>${p}</label>`;
+                });
+            }
+            
+            evaluateSatatya(finalDailyKarma < 0);
+        }
+        
+        function evaluateSatatya(needsPrayashchit = false) {
+            if (needsPrayashchit) {
+                const selectedOption = document.querySelector('input[name="prayashchit"]:checked');
+                if(selectedOption) {
+                    state.activePrayashchit = { name: selectedOption.value, completed: false };
+                }
+            }
+
+            state.totalKarma += state.dailyKarma;
+            state.dailyKarma = 0;
+            
+            state.goals.forEach(goal => {
                 goal.completedToday = false;
                 goal.karmas.forEach(k => k.completed = false);
             });
 
-            state.totalKarma += state.dailyKarma;
-
-            if (state.dailyKarma > 0 || penanceCompleted) {
-                 showMessage(`Day complete! Today's score: ${state.dailyKarma}.`, "success");
-            } else {
-                showMessage(`A new day is a new opportunity.`, "info");
-            }
-            
-            state.dailyKarma = 0;
+            showMessage(`Day complete! Your progress has been saved.`, "success");
             saveState();
         }
+        
+        // --- Drag and Drop Logic ---
+        let draggedItem = null;
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.karma-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        taskList.addEventListener('dragstart', e => {
+            if (e.target.classList.contains('karma-item')) {
+                draggedItem = e.target;
+                setTimeout(() => e.target.classList.add('dragging'), 0);
+            }
+        });
+
+        taskList.addEventListener('dragend', e => {
+            if (draggedItem) {
+                draggedItem.classList.remove('dragging');
+                draggedItem = null;
+                
+                const newOrderedIds = [...taskList.querySelectorAll('.karma-item')].map(item => ({
+                    karmaId: Number(item.dataset.karmaId),
+                    goalId: Number(item.dataset.goalId)
+                }));
+
+                let orderCounter = 0;
+                newOrderedIds.forEach(ids => {
+                    if (!ids.goalId) return; // Skip prayashchit
+                    const goal = state.goals.find(g => g.id === ids.goalId);
+                    const karma = goal.karmas.find(k => k.id === ids.karmaId);
+                    if (karma) {
+                        karma.order = orderCounter++;
+                    }
+                });
+                saveState();
+            }
+        });
+
+        taskList.addEventListener('dragover', e => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(taskList, e.clientY);
+            if (afterElement == null) {
+                taskList.appendChild(draggedItem);
+            } else {
+                taskList.insertBefore(draggedItem, afterElement);
+            }
+        });
 
         // --- Utility ---
         function showMessage(message, type = 'success') {
@@ -607,7 +670,7 @@
 
             const badgeModal = document.getElementById('badge-modal');
             badgeModal.classList.remove('hidden');
-            setTimeout(() => { // For transition effect
+            setTimeout(() => {
                 badgeModalContent.classList.remove('scale-95', 'opacity-0');
             }, 10);
         }
@@ -624,20 +687,18 @@
         function handleResetKarma() {
             if (resetKarmaBtn.dataset.confirm === 'true') {
                 state.totalKarma = 0;
+                state.goals.forEach(g => g.totalPracticeKarma = 0);
                 showMessage('Your accumulated Karma has been reset.', 'info');
                 saveState();
-                // Reset button state
                 resetKarmaBtn.textContent = 'Reset Accumulated Karma';
                 resetKarmaBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
                 resetKarmaBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
                 delete resetKarmaBtn.dataset.confirm;
             } else {
-                // First click, ask for confirmation
                 resetKarmaBtn.textContent = 'Confirm Reset?';
                 resetKarmaBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
                 resetKarmaBtn.classList.add('bg-red-600', 'hover:bg-red-700');
                 resetKarmaBtn.dataset.confirm = 'true';
-                // Set a timeout to revert the button if not clicked again
                 setTimeout(() => {
                     if (resetKarmaBtn.dataset.confirm === 'true') {
                         resetKarmaBtn.textContent = 'Reset Accumulated Karma';
