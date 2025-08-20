@@ -85,7 +85,6 @@
             </div>
         </div>
         <div class="mt-auto pt-6 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
-             <!-- RE-ADDED: Reset Karma Button -->
              <button id="reset-karma-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors mb-4">Reset Accumulated Karma</button>
              <button id="reset-day-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg">End Day & Evaluate</button>
         </div>
@@ -199,7 +198,7 @@
             gitaQuoteEl: document.getElementById('gita-quote'),
             taskList: document.getElementById('task-list'),
             resetDayBtn: document.getElementById('reset-day-btn'),
-            resetKarmaBtn: document.getElementById('reset-karma-btn'), // RE-ADDED
+            resetKarmaBtn: document.getElementById('reset-karma-btn'),
             sidebar: document.getElementById('sidebar'),
             sidebarOverlay: document.getElementById('sidebar-overlay'),
             menuBtn: document.getElementById('menu-btn'),
@@ -246,6 +245,17 @@
             }
         });
 
+        // NEW: Handle the result of the redirect sign-in
+        auth.getRedirectResult()
+            .then((result) => {
+                if (result.user) {
+                    // User is signed in. onAuthStateChanged will handle the rest.
+                    showMessage(`Welcome, ${result.user.displayName}!`, 'success');
+                }
+            }).catch((error) => {
+                showMessage(error.message, 'error');
+            });
+
         function loadState(userId) {
             const docRef = db.collection('users').doc(userId);
             unsubscribe = docRef.onSnapshot(doc => {
@@ -266,7 +276,7 @@
             }
         }
 
-        // --- Rendering Engine ---
+        // --- All other functions (renderAll, renderSidebar, etc.) remain the same ---
         function renderAll() {
             if (!state.goals) return;
             renderSidebar();
@@ -346,7 +356,6 @@
             });
         }
 
-        // --- Core Logic & UI Interactions ---
         function addGoal() {
             const name = dom.goalNameInput.value.trim();
             if (!name) { showMessage("Practice name cannot be empty.", "error"); return; }
@@ -562,7 +571,6 @@
             dom.badgeModal.classList.remove('hidden');
         }
         
-        // RE-ADDED: Function to show info for locked badges
         function showBadgeInfoModal(badge) {
             dom.badgeModalContent.innerHTML = `
                 <i class="fas ${badge.icon} text-6xl mb-4 text-slate-400"></i>
@@ -610,7 +618,6 @@
             }
         }
 
-        // RE-ADDED: Function to handle resetting all karma
         function handleResetKarma() {
             if (dom.resetKarmaBtn.dataset.confirm === 'true') {
                 state.totalKarma = 0;
@@ -650,7 +657,13 @@
 
         // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => { dom.gitaQuoteEl.textContent = `"${gitaQuotes[new Date().getDate() % gitaQuotes.length]}"`; });
-        dom.googleSigninBtn.addEventListener('click', () => { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => showMessage(e.message, 'error')); });
+        
+        // UPDATED: Google Sign-in now uses redirect
+        dom.googleSigninBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithRedirect(provider);
+        });
+
         dom.emailSignupBtn.addEventListener('click', () => { auth.createUserWithEmailAndPassword(dom.emailInput.value, dom.passwordInput.value).catch(e => showMessage(e.message, 'error')); });
         dom.emailSigninBtn.addEventListener('click', () => { auth.signInWithEmailAndPassword(dom.emailInput.value, dom.passwordInput.value).catch(e => showMessage(e.message, 'error')); });
         dom.signoutBtn.addEventListener('click', () => auth.signOut());
@@ -662,7 +675,7 @@
         dom.cancelAddKarmaBtn.addEventListener('click', () => closeModal('add-karma-modal'));
         dom.taskList.addEventListener('click', handleTaskClick);
         dom.resetDayBtn.addEventListener('click', endDay);
-        dom.resetKarmaBtn.addEventListener('click', handleResetKarma); // RE-ADDED
+        dom.resetKarmaBtn.addEventListener('click', handleResetKarma);
         dom.sidebarBadgeContainer.addEventListener('click', e => { 
             const badgeEl = e.target.closest('.badge');
             if (!badgeEl) return;
@@ -672,7 +685,7 @@
             if (badgeEl.classList.contains('unlocked')) {
                 showBadgeUnlockModal(badge);
             } else {
-                showBadgeInfoModal(badge); // RE-ADDED
+                showBadgeInfoModal(badge);
             }
         });
         dom.addCustomPrayashchitBtn.addEventListener('click', addCustomPrayashchit);
