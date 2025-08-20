@@ -1,9 +1,15 @@
-[[headers]]
-for = "/manifest.webmanifest"
-  [headers.values]
-  Content-Type = "application/manifest+json; charset=utf-8"
+# This file configures deployment settings for Netlify.
 
+# This rule ensures that your manifest.json file is served with the
+# correct Content-Type header, which is a requirement for PWAs.
 [[headers]]
-for = "/service-worker.js"
+  for = "/manifest.json"
   [headers.values]
-  Cache-Control = "no-cache, no-store, must-revalidate"
+    Content-Type = "application/manifest+json"
+
+# This rule prevents the service worker file from being cached by the browser
+# for too long, which makes it easier to push updates to your users.
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "no-cache"
