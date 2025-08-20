@@ -85,7 +85,9 @@
             </div>
         </div>
         <div class="mt-auto pt-6 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
-             <button id="reset-day-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg mt-4">End Day & Evaluate</button>
+             <!-- RE-ADDED: Reset Karma Button -->
+             <button id="reset-karma-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors mb-4">Reset Accumulated Karma</button>
+             <button id="reset-day-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg">End Day & Evaluate</button>
         </div>
     </div>
 
@@ -197,6 +199,7 @@
             gitaQuoteEl: document.getElementById('gita-quote'),
             taskList: document.getElementById('task-list'),
             resetDayBtn: document.getElementById('reset-day-btn'),
+            resetKarmaBtn: document.getElementById('reset-karma-btn'), // RE-ADDED
             sidebar: document.getElementById('sidebar'),
             sidebarOverlay: document.getElementById('sidebar-overlay'),
             menuBtn: document.getElementById('menu-btn'),
@@ -446,10 +449,11 @@
             const completedGoals = new Set();
             const allGoalsWithTasks = new Set(state.dailyActions.filter(t => t.type === 'karma').map(t => t.goalId));
             
-            allGoalsWithTasks.forEach(goalId => {
-                const hasUncompleted = state.dailyActions.some(t => t.goalId === goalId && t.type === 'karma');
-                if (!hasUncompleted) {
-                    completedGoals.add(goalId);
+            state.goals.forEach(goal => {
+                const hadTasks = allGoalsWithTasks.has(goal.id);
+                const completedAllTasksForGoal = hadTasks && !state.dailyActions.some(t => t.goalId === goal.id && t.type === 'karma');
+                if (completedAllTasksForGoal) {
+                    completedGoals.add(goal.id);
                 }
             });
 
@@ -557,6 +561,17 @@
                 <button onclick="closeModal('badge-modal')" class="mt-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-semibold py-2 px-6 rounded-lg">Continue</button>`;
             dom.badgeModal.classList.remove('hidden');
         }
+        
+        // RE-ADDED: Function to show info for locked badges
+        function showBadgeInfoModal(badge) {
+            dom.badgeModalContent.innerHTML = `
+                <i class="fas ${badge.icon} text-6xl mb-4 text-slate-400"></i>
+                <h2 class="text-3xl font-bold">${badge.name}</h2>
+                <p class="text-slate-500 dark:text-slate-400 mt-2">Requires ${badge.days} days of Sātatya in a single practice to unlock.</p>
+                <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${badge.meaning}"</p>
+                <button onclick="closeModal('badge-modal')" class="mt-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-semibold py-2 px-6 rounded-lg">Close</button>`;
+            dom.badgeModal.classList.remove('hidden');
+        }
 
         function showSummaryModal(finalDailyKarma, missedCount) {
             dom.summaryModalContent.innerHTML = `
@@ -590,8 +605,35 @@
             if (newPrayashchit && !state.customPrayashchits.includes(newPrayashchit)) {
                 state.customPrayashchits.push(newPrayashchit);
                 dom.customPrayashchitInput.value = '';
-                renderPrayashchitOptions(); // Re-render options with the new one
+                renderPrayashchitOptions();
                 saveState();
+            }
+        }
+
+        // RE-ADDED: Function to handle resetting all karma
+        function handleResetKarma() {
+            if (dom.resetKarmaBtn.dataset.confirm === 'true') {
+                state.totalKarma = 0;
+                state.goals.forEach(g => g.totalPracticeKarma = 0);
+                showMessage('Your accumulated Karma has been reset.', 'info');
+                saveState();
+                dom.resetKarmaBtn.textContent = 'Reset Accumulated Karma';
+                dom.resetKarmaBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                dom.resetKarmaBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
+                delete dom.resetKarmaBtn.dataset.confirm;
+            } else {
+                dom.resetKarmaBtn.textContent = 'Confirm Reset?';
+                dom.resetKarmaBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
+                dom.resetKarmaBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                dom.resetKarmaBtn.dataset.confirm = 'true';
+                setTimeout(() => {
+                    if (dom.resetKarmaBtn.dataset.confirm === 'true') {
+                        dom.resetKarmaBtn.textContent = 'Reset Accumulated Karma';
+                        dom.resetKarmaBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                        dom.resetKarmaBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
+                        delete dom.resetKarmaBtn.dataset.confirm;
+                    }
+                }, 3000);
             }
         }
 
@@ -620,11 +662,17 @@
         dom.cancelAddKarmaBtn.addEventListener('click', () => closeModal('add-karma-modal'));
         dom.taskList.addEventListener('click', handleTaskClick);
         dom.resetDayBtn.addEventListener('click', endDay);
+        dom.resetKarmaBtn.addEventListener('click', handleResetKarma); // RE-ADDED
         dom.sidebarBadgeContainer.addEventListener('click', e => { 
             const badgeEl = e.target.closest('.badge');
-            if (badgeEl && badgeEl.classList.contains('unlocked')) {
-                const badge = badges.find(b => b.name === badgeEl.dataset.badgeName);
-                if(badge) showBadgeUnlockModal(badge);
+            if (!badgeEl) return;
+            const badge = badges.find(b => b.name === badgeEl.dataset.badgeName);
+            if (!badge) return;
+            
+            if (badgeEl.classList.contains('unlocked')) {
+                showBadgeUnlockModal(badge);
+            } else {
+                showBadgeInfoModal(badge); // RE-ADDED
             }
         });
         dom.addCustomPrayashchitBtn.addEventListener('click', addCustomPrayashchit);
@@ -634,7 +682,6 @@
             closeModal('prayashchit-modal');
             finalizeDay(finalDailyKarma, choice);
         });
-
         document.addEventListener('click', e => { if (e.target.id === 'badge-modal') closeModal('badge-modal'); });
     </script>
 
