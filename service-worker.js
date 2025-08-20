@@ -1,51 +1,59 @@
-// Define the cache name for your app's assets.
-const CACHE_NAME = 'karmyog-v1';
+/* Karmyog service worker */
 
-// List all the essential files that make up the app's "shell".
-// These will be cached so the app can load offline.
-const urlsToCache = [
-  '/', // The root of your site
-  '/index.html', // The main HTML file
-  'https://cdn.tailwindcss.com', // Tailwind CSS framework
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css', // Font Awesome icons
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' // Google Fonts
+const CACHE_VERSION = 'v1';
+const CACHE_NAME = `karmyog-${CACHE_VERSION}`;
+const PRECACHE_URLS = [
+  '/',
+  '/index.html',
+  '/manifest.webmanifest',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png'
 ];
 
-/**
- * Installation Event:
- * This event is triggered when the service worker is first installed.
- * It opens a cache and adds the app shell files to it.
- */
-self.addEventListener('install', event => {
-  // waitUntil() ensures the service worker won't install until the code inside has successfully completed.
+// Install: precache basic shell
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        // addAll() fetches and caches all the specified URLs.
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
   );
+  self.skipWaiting();
 });
 
-/**
- * Fetch Event:
- * This event is triggered for every network request made by the page (e.g., for CSS, images, or data).
- * It allows the service worker to intercept the request and respond with a cached version if available.
- */
-self.addEventListener('fetch', event => {
-  // respondWith() hijacks the request and lets us provide our own response.
-  event.respondWith(
-    // caches.match() checks if the request exists in any of the caches.
-    caches.match(event.request)
-      .then(response => {
-        // If a cached response is found (a "cache hit"), return it.
-        if (response) {
-          return response;
-        }
-        // If the request is not in the cache, let the browser handle it as a normal network request.
-        return fetch(event.request);
-      }
+// Activate: cleanup old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : undefined)))
     )
+  );
+  self.clients.claim();
+});
+
+// Fetch: handle only same-origin requests
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  const url = new URL(req.url);
+
+  // Only same-origin so we don't interfere with Firebase/Google hosts
+  if (url.origin !== self.location.origin) return;
+
+  // For navigations, try network then offline fallback
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req).catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // For other local assets, cache-first then network
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then((res) => {
+        // store a copy for future
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
+        return res;
+      });
+    })
   );
 });
