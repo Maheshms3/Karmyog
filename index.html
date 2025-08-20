@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Karmayog - Your Path of Abhyāsa</title>
+    <title>Karmyog - Your Path of Abhyāsa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+
     <style>
         body { font-family: 'Inter', sans-serif; user-select: none; overflow-x: hidden; }
         .karma-item { transition: opacity 0.5s ease, transform 0.5s ease; position: relative; }
@@ -34,7 +38,7 @@
     <!-- Login Overlay -->
     <div id="auth-overlay" class="fixed inset-0 bg-slate-900 bg-opacity-95 z-50 flex items-center justify-center p-4">
         <div class="w-full max-w-sm text-center">
-            <h1 class="text-5xl font-bold text-white mb-2">Karmayog</h1>
+            <h1 class="text-5xl font-bold text-white mb-2">Karmyog</h1>
             <p class="text-slate-400 mb-8">Sign in to begin your path of Abhyāsa.</p>
             <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl">
                 <button id="google-signin-btn" class="w-full bg-white hover:bg-slate-200 text-slate-800 font-semibold py-3 px-4 rounded-lg flex items-center justify-center transition-transform transform hover:scale-105">
@@ -79,7 +83,7 @@
         <!-- Header -->
         <header class="text-center mb-6 relative flex items-center justify-between">
             <button id="menu-btn" class="text-2xl text-slate-800 dark:text-slate-200"><i class="fas fa-bars"></i></button>
-            <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Karmayog</h1>
+            <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Karmyog</h1>
             <button id="signout-btn" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold py-2 px-4 rounded-lg">Sign Out</button>
         </header>
 
@@ -754,6 +758,21 @@
                 closeBadgeModal();
             }
         });
+    </script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
