@@ -56,6 +56,9 @@
                 <button id="google-signin-btn" class="w-full bg-white hover:bg-slate-200 text-slate-800 font-semibold py-3 px-4 rounded-lg flex items-center justify-center transition-transform transform hover:scale-105">
                     <img src="https://www.google.com/favicon.ico" alt="Google icon" class="w-6 h-6 mr-3"> Sign in with Google
                 </button>
+                <!-- NEW: Fallback link for redirect sign-in -->
+                <a href="#" id="google-redirect-fallback" class="hidden mt-4 text-sm text-indigo-400 hover:text-indigo-300">Pop-up blocked? Try alternate sign-in</a>
+                
                 <div class="my-6 flex items-center"><hr class="w-full border-slate-600"><span class="px-4 text-slate-500 text-sm">OR</span><hr class="w-full border-slate-600"></div>
                 <form id="email-form">
                     <input type="email" id="email-input" placeholder="Email" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-4 border-2 border-transparent focus:border-indigo-500 focus:ring-0" required>
@@ -188,6 +191,7 @@
             authOverlay: document.getElementById('auth-overlay'),
             appContainer: document.getElementById('app-container'),
             googleSigninBtn: document.getElementById('google-signin-btn'),
+            googleRedirectFallback: document.getElementById('google-redirect-fallback'), // NEW
             emailSigninBtn: document.getElementById('email-signin-btn'),
             emailSignupBtn: document.getElementById('email-signup-btn'),
             emailInput: document.getElementById('email-input'),
@@ -245,15 +249,15 @@
             }
         });
 
-        // NEW: Handle the result of the redirect sign-in
         auth.getRedirectResult()
             .then((result) => {
                 if (result.user) {
-                    // User is signed in. onAuthStateChanged will handle the rest.
                     showMessage(`Welcome, ${result.user.displayName}!`, 'success');
                 }
             }).catch((error) => {
-                showMessage(error.message, 'error');
+                if (error.code !== 'auth/no-auth-event') {
+                    showMessage(error.message, 'error');
+                }
             });
 
         function loadState(userId) {
@@ -658,8 +662,22 @@
         // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => { dom.gitaQuoteEl.textContent = `"${gitaQuotes[new Date().getDate() % gitaQuotes.length]}"`; });
         
-        // UPDATED: Google Sign-in now uses redirect
+        // **NEW** INTELLIGENT AUTH LOGIC
         dom.googleSigninBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(error => {
+                // If pop-up fails, show the fallback link
+                if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+                    dom.googleRedirectFallback.classList.remove('hidden');
+                    showMessage('Pop-up was closed. Use the alternate link if needed.', 'error');
+                } else {
+                    showMessage(error.message, 'error');
+                }
+            });
+        });
+
+        dom.googleRedirectFallback.addEventListener('click', (e) => {
+            e.preventDefault();
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithRedirect(provider);
         });
