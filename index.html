@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Karmyog - Your Path of Abhyāsa</title>
+    
+    <!-- PWA -->
+    <meta name="theme-color" content="#1e293b">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- PWA -->
-    <meta name="theme-color" content="#0f172a">
-    <link rel="manifest" href="/manifest.webmanifest">
-
+    
     <style>
         body { font-family: 'Inter', sans-serif; user-select: none; overflow-x: hidden; }
         .karma-item { transition: opacity 0.5s ease, transform 0.5s ease; position: relative; }
@@ -27,34 +28,32 @@
         .badge:hover { transform: scale(1.1); }
         #sidebar { transition: transform 0.3s ease-in-out; }
         #sidebar-overlay { transition: opacity 0.3s ease-in-out; }
-        .vikarma-card { background-color: #fef2f2; }
+        .vikarma-card { background-color: #fef2f2; } 
         .dark .vikarma-card { background-color: rgba(153, 27, 27, 0.2); }
         .prayashchit-card { background-color: #fffbeb; }
         .dark .prayashchit-card { background-color: rgba(180, 83, 9, 0.2); }
         .dragging { opacity: 0.5; }
 
-        /* Install button */
+        /* Install button style */
         #installBtn {
           position: fixed;
           right: 1rem;
           bottom: 1rem;
-          padding: .7rem 1rem;
+          padding: 0.7rem 1rem;
           border: 0;
-          border-radius: .6rem;
+          border-radius: 0.6rem;
           font: 600 14px/1.2 system-ui, sans-serif;
-          background: #0f172a;
+          background: #4f46e5; /* Indigo */
           color: #fff;
           cursor: pointer;
-          display: none;
-          z-index: 60;
+          display: none; /* Hidden by default */
+          z-index: 100;
         }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
 
-    <!-- Install button (shown when PWA is installable) -->
-    <button id="installBtn" type="button">Install Karmyog</button>
-
+    <!-- Your entire app body remains the same -->
     <!-- Login Overlay -->
     <div id="auth-overlay" class="fixed inset-0 bg-slate-900 bg-opacity-95 z-50 flex items-center justify-center p-4">
         <div class="w-full max-w-sm text-center">
@@ -69,14 +68,13 @@
                     <input type="email" id="email-input" placeholder="Email" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-4 border-2 border-transparent focus:border-indigo-500 focus:ring-0" required>
                     <input type="password" id="password-input" placeholder="Password (6+ characters)" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-4 border-2 border-transparent focus:border-indigo-500 focus:ring-0" required>
                     <div class="grid grid-cols-2 gap-3">
-                        <button type="button" id="email-signin-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg">Sign In</button>
-                        <button type="button" id="email-signup-btn" class="w-full bg-slate-600 hover:bg-slate-700 text-white font-semibold py-3 px-4 rounded-lg">Sign Up</button>
+                        <button type="button" id="email-signin-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg">Sign In</button>
+                        <button type="button" id="email-signup-btn" class="w-full bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-lg">Sign Up</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-
     <!-- Sidebar -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
     <div id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-800 shadow-xl z-40 transform -translate-x-full p-6 flex flex-col">
@@ -97,7 +95,6 @@
              <button id="reset-day" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg mt-4">End Day & Evaluate</button>
         </div>
     </div>
-
     <!-- Main App Content (Initially Hidden) -->
     <div id="app-container" class="hidden container mx-auto max-w-2xl p-4 sm:p-6">
         <!-- Header -->
@@ -106,15 +103,12 @@
             <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Karmyog</h1>
             <button id="signout-btn" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold py-2 px-4 rounded-lg">Sign Out</button>
         </header>
-
         <!-- Main Stats -->
         <div class="text-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-lg mb-6 sticky top-4 z-10">
             <p class="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Accumulated Karma</p>
             <p id="karma-score" class="text-4xl font-bold mt-1">0</p>
         </div>
-
         <p id="gita-quote" class="text-sm text-center text-slate-500 dark:text-slate-400 mt-3 mb-6 italic max-w-xl mx-auto"></p>
-
         <!-- Task List -->
         <div id="task-list-container" class="min-h-screen">
             <h2 class="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Today's Actions</h2>
@@ -122,25 +116,50 @@
             <button id="add-karma-btn" class="w-full mt-6 bg-indigo-200 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-300 dark:hover:bg-indigo-900 font-semibold py-3 rounded-lg text-sm">+ Add New Action</button>
         </div>
     </div>
-
     <!-- Modals -->
-    <!-- (unchanged: your modals) -->
     <div id="add-karma-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <!-- ... -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-4">Add New Action</h2>
+            <form id="add-karma-form">
+                <div class="mb-4">
+                    <label for="karma-goal-select" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Assign to Practice (Abhyāsa)</label>
+                    <select id="karma-goal-select" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg" required></select>
+                </div>
+                <input type="text" id="karma-name" placeholder="Action name..." class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg mb-4" required>
+                <select id="karma-type" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg mb-6">
+                    <option value="karma">Karma (Positive Action)</option>
+                    <option value="vikarma">Vikarma (Negative Action)</option>
+                </select>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancel-add-karma" class="bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">Add Action</button>
+                </div>
+            </form>
+        </div>
     </div>
     <div id="prayashchit-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <!-- ... -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+            <i class="fas fa-person-praying text-5xl text-amber-600 mb-4"></i>
+            <h2 class="text-3xl font-bold">Prayashchit (Penance)</h2>
+            <p class="mt-2 mb-6">Your daily Karma is negative. Choose a penance to restore balance:</p>
+            <div id="prayashchit-options" class="space-y-3 text-left mb-6"></div>
+            <button id="accept-prayashchit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg">I Accept</button>
+        </div>
     </div>
     <div id="badge-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div id="badge-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center transform transition-all scale-95 opacity-0"></div>
+        <div id="badge-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center transform transition-all scale-95 opacity-0"></div>
     </div>
     <div id="message-box" class="hidden fixed bottom-5 right-5 p-4 text-sm rounded-lg shadow-lg z-50" role="alert"></div>
 
+    <!-- NEW: Install button for PWA -->
+    <button id="installBtn" type="button">Install Karmyog</button>
+    
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
 
+    <!-- Your existing app script -->
     <script>
         // YOUR FIREBASE CONFIGURATION
         const firebaseConfig = {
@@ -158,8 +177,8 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // ------- your existing app code below (unchanged except at the very end we add PWA listeners) -------
-
+        // All your existing app logic remains here...
+        // ... (the huge block of your app's javascript)
         const authOverlay = document.getElementById('auth-overlay');
         const appContainer = document.getElementById('app-container');
         const googleSigninBtn = document.getElementById('google-signin-btn');
@@ -188,19 +207,16 @@
         const prayashchitModal = document.getElementById('prayashchit-modal');
         const prayashchitOptionsEl = document.getElementById('prayashchit-options');
         const acceptPrayashchitBtn = document.getElementById('accept-prayashchit');
-
         const KARMA_POINTS = 1;
         const SATATYA_REWARD = 2;
         const SATATYA_PENALTY = -3;
         const PRAYASHCHIT_PENALTY = -5;
         let state = {};
         let unsubscribe;
-
         const defaultState = { totalKarma: 0, dailyKarma: 0, goals: [], unlockedBadges: [], activePrayashchit: null };
         const badges = [ { days: 9, name: 'Arjuna', icon: 'fa-user-graduate', color: 'text-slate-500' }, { days: 18, name: 'Sthitaprajña', icon: 'fa-brain', color: 'text-sky-500' }, { days: 27, name: 'Yuktah', icon: 'fa-link', color: 'text-blue-500' }, { days: 36, name: 'Niyatam', icon: 'fa-calendar-check', color: 'text-indigo-500' }, { days: 45, name: 'Akartā', icon: 'fa-hand-paper', color: 'text-purple-500' }, { days: 54, name: 'Tyāgī', icon: 'fa-leaf', color: 'text-emerald-500' }, { days: 63, name: 'Samatvam', icon: 'fa-scale-balanced', color: 'text-lime-500' }, { days: 72, name: 'Bhakta', icon: 'fa-heart', color: 'text-rose-500' }, { days: 81, name: 'Jñānī', icon: 'fa-book-open', color: 'text-amber-500' }, { days: 90, name: 'Yogī', icon: 'fa-om', color: 'text-orange-500' }, { days: 99, name: 'Brahmabhūta', icon: 'fa-star-of-life', color: 'text-yellow-400' }, { days: 108, name: 'Ātmarāma', icon: 'fa-sun', color: 'text-yellow-300' } ];
         const gitaQuotes = [ "You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions. - 2.47", "Perform your obligatory duty, because action is indeed better than inaction. - 3.8", "The wise see inaction in action and action in inaction. - 4.18", "One who performs their duty without attachment, surrendering the results to the Supreme Lord, is unaffected by sinful action. - 5.10", "It is better to live your own destiny imperfectly than to live an imitation of somebody else's life with perfection. - 3.35" ];
         const prayashchitList = [ "Take a cold water bath", "Avoid all sugar for 24 hours", "Use stairs instead of the lift", "30 minutes of selfless service (seva)", "Maintain silence for 2 hours" ];
-
         auth.onAuthStateChanged(user => {
             if (user) {
                 authOverlay.classList.add('hidden');
@@ -213,7 +229,6 @@
                 state = {};
             }
         });
-
         function loadState(userId) {
             const docRef = db.collection('users').doc(userId);
             unsubscribe = docRef.onSnapshot(doc => {
@@ -226,126 +241,67 @@
                 renderAll();
             });
         }
-
         function saveState() {
             if (auth.currentUser) {
                 db.collection('users').doc(auth.currentUser.uid).set(state)
                   .catch(error => console.error("Error saving state: ", error));
             }
         }
-
         function renderAll() {
             if (!state.goals) return;
             renderSidebar();
             renderTaskList();
             updateStats();
         }
-
         function renderSidebar() {
             sidebarGoalList.innerHTML = '';
             if (state.goals.length > 0) {
                 state.goals.forEach(goal => {
-                    sidebarGoalList.innerHTML += `
-                        <div class="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg">
-                            <span class="font-semibold">${goal.name}</span>
-                            <div class="text-right">
-                                <p class="font-bold"><i class="fas fa-infinity text-indigo-500"></i> ${goal.satatya}</p>
-                                <p class="text-xs text-slate-400">Karma: ${goal.totalPracticeKarma || 0}</p>
-                            </div>
-                            <button class="delete-goal-btn text-red-400 hover:text-red-600 ml-2" data-goal-id="${goal.id}"><i class="fas fa-trash"></i></button>
-                        </div>
-                    `;
+                    sidebarGoalList.innerHTML += `<div class="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg"><span class="font-semibold">${goal.name}</span><div class="text-right"><p class="font-bold"><i class="fas fa-infinity text-indigo-500"></i> ${goal.satatya}</p><p class="text-xs text-slate-400">Karma: ${goal.totalPracticeKarma || 0}</p></div><button class="delete-goal-btn text-red-400 hover:text-red-600 ml-2" data-goal-id="${goal.id}"><i class="fas fa-trash"></i></button></div>`;
                 });
             } else {
                 sidebarGoalList.innerHTML = `<p class="text-sm text-slate-500 italic">Create your first practice above.</p>`;
             }
             renderBadges();
         }
-
         function renderTaskList() {
             taskList.innerHTML = '';
             let flatTaskList = [];
-
             if (state.activePrayashchit && !state.activePrayashchit.completed) {
                 flatTaskList.push({ ...state.activePrayashchit, type: 'prayashchit', order: 0 });
             }
-
             state.goals.forEach(goal => {
                 goal.karmas.filter(k => !k.completed).forEach(karma => {
                     flatTaskList.push({ ...karma, goalId: goal.id, goalName: goal.name });
                 });
             });
-
             flatTaskList.sort((a, b) => a.order - b.order);
-
             if (flatTaskList.length === 0) {
                 taskList.innerHTML = `<p class="text-center text-slate-500 italic py-8">All actions for today are complete. Add more below.</p>`;
                 return;
             }
-
             flatTaskList.forEach(task => {
                 const li = document.createElement('li');
                 li.className = 'karma-item bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md';
                 li.dataset.type = task.type;
                 li.draggable = true;
-
                 if (task.type === 'prayashchit') {
                     li.classList.add('prayashchit-card');
-                    li.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <i class="fas fa-person-praying text-amber-500 mr-4"></i>
-                                <div>
-                                    <p class="font-semibold text-lg">${task.name}</p>
-                                    <p class="text-xs text-slate-400">Prayashchit (Penance)</p>
-                                </div>
-                            </div>
-                            <button class="log-prayashchit-btn text-xs bg-amber-500 text-white px-3 py-1 rounded-md mx-2">Complete</button>
-                        </div>`;
+                    li.innerHTML = `<div class="flex items-center justify-between"><div class="flex items-center"><i class="fas fa-person-praying text-amber-500 mr-4"></i><div><p class="font-semibold text-lg">${task.name}</p><p class="text-xs text-slate-400">Prayashchit (Penance)</p></div></div><button class="log-prayashchit-btn text-xs bg-amber-500 text-white px-3 py-1 rounded-md mx-2">Complete</button></div>`;
                 } else {
                     li.dataset.goalId = task.goalId;
                     li.dataset.karmaId = task.id;
                     if (task.type === 'vikarma') li.classList.add('vikarma-card');
-
                     const deleteBtnHTML = `<button class="delete-karma-btn text-slate-400 hover:text-red-500 text-xs ml-2"><i class="fas fa-times"></i></button>`;
-
                     if (task.type === 'karma') {
-                        li.innerHTML = `
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <i class="fas fa-leaf text-green-500 mr-4"></i>
-                                    <div>
-                                        <p class="font-semibold text-lg">${task.name}</p>
-                                        <p class="text-xs text-slate-400">${task.goalName}</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="font-bold text-green-500 mx-2">+${KARMA_POINTS}</span>
-                                    ${deleteBtnHTML}
-                                </div>
-                            </div>`;
+                        li.innerHTML = `<div class="flex items-center justify-between"><div class="flex items-center"><i class="fas fa-leaf text-green-500 mr-4"></i><div><p class="font-semibold text-lg">${task.name}</p><p class="text-xs text-slate-400">${task.goalName}</p></div></div><div class="flex items-center"><span class="font-bold text-green-500 mx-2">+${KARMA_POINTS}</span>${deleteBtnHTML}</div></div>`;
                     } else {
-                        li.innerHTML = `
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <i class="fas fa-leaf text-slate-400 mr-4"></i>
-                                    <div>
-                                        <p class="font-semibold text-lg">${task.name}</p>
-                                        <p class="text-xs text-slate-400">${task.goalName}</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="font-bold text-red-500">-${KARMA_POINTS}</span>
-                                    <button class="log-vikarma-btn text-xs bg-red-500 text-white px-3 py-1 rounded-md mx-2">Log</button>
-                                    ${deleteBtnHTML}
-                                </div>
-                            </div>`;
+                        li.innerHTML = `<div class="flex items-center justify-between"><div class="flex items-center"><i class="fas fa-leaf text-slate-400 mr-4"></i><div><p class="font-semibold text-lg">${task.name}</p><p class="text-xs text-slate-400">${task.goalName}</p></div></div><div class="flex items-center"><span class="font-bold text-red-500">-${KARMA_POINTS}</span><button class="log-vikarma-btn text-xs bg-red-500 text-white px-3 py-1 rounded-md mx-2">Log</button>${deleteBtnHTML}</div></div>`;
                     }
                 }
                 taskList.appendChild(li);
             });
         }
-
         function renderBadges() {
             sidebarBadgeContainer.innerHTML = '';
             badges.forEach(badge => {
@@ -358,7 +314,6 @@
                 sidebarBadgeContainer.appendChild(badgeEl);
             });
         }
-
         function updateStats() {
             karmaScoreEl.textContent = state.totalKarma;
             karmaScoreEl.className = 'text-4xl font-bold mt-1 ';
@@ -366,7 +321,6 @@
             else if (state.totalKarma < 0) karmaScoreEl.classList.add('karma-negative');
             else karmaScoreEl.classList.add('karma-neutral');
         }
-
         function toggleSidebar(show) {
             if (show) {
                 sidebar.classList.remove('-translate-x-full');
@@ -376,7 +330,6 @@
                 sidebarOverlay.classList.add('hidden');
             }
         }
-
         function addGoal() {
             const name = goalNameInput.value.trim();
             if (!name) { showMessage("Practice name cannot be empty.", "error"); return; }
@@ -384,14 +337,12 @@
             goalNameInput.value = '';
             saveState();
         }
-
         function openAddKarmaModal() {
             if (state.goals.length === 0) { showMessage("Please create a Practice in the sidebar first.", "error"); return; }
             karmaGoalSelect.innerHTML = state.goals.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
             addKarmaForm.reset();
             addKarmaModal.classList.remove('hidden');
         }
-
         function handleAddKarma(e) {
             e.preventDefault();
             const goalId = Number(karmaGoalSelect.value);
@@ -403,39 +354,50 @@
             addKarmaModal.classList.add('hidden');
             saveState();
         }
-
+        function handleTaskClick(e) {
+            const fireOverlay = e.target.closest('.fire-overlay');
+            const actionButton = e.target.closest('button');
+            if (fireOverlay) { handleKarmaCompletion(e); return; }
+            if (actionButton) { handleActionButtons(e); return; }
+            const karmaItem = e.target.closest('.karma-item');
+            if (!karmaItem || karmaItem.dataset.type === 'prayashchit') return;
+            document.querySelectorAll('.fire-overlay').forEach(el => {
+                if (el.parentElement !== karmaItem) el.remove();
+            });
+            const existingOverlay = karmaItem.querySelector('.fire-overlay');
+            if (existingOverlay) {
+                existingOverlay.remove();
+            } else if (karmaItem.dataset.type === 'karma') {
+                const newFireOverlay = document.createElement('div');
+                newFireOverlay.className = 'fire-overlay';
+                newFireOverlay.innerHTML = `<i class="fas fa-fire text-orange-500 text-4xl"></i>`;
+                karmaItem.appendChild(newFireOverlay);
+            }
+        }
         function handleKarmaCompletion(e) {
             const fireOverlay = e.target.closest('.fire-overlay');
             if (!fireOverlay) return;
-
             const karmaItem = fireOverlay.parentElement;
             const goalId = Number(karmaItem.dataset.goalId);
             const karmaId = Number(karmaItem.dataset.karmaId);
             const goal = state.goals.find(g => g.id === goalId);
             const karma = goal.karmas.find(k => k.id === karmaId);
-
             if (karma && !karma.completed) {
                 karma.completed = true;
                 goal.completedToday = true;
                 state.dailyKarma += karma.points;
                 goal.totalPracticeKarma += karma.points;
-
                 showMessage(`Karma '${karma.name}' offered! +${karma.points}`, "success");
-
                 karmaItem.classList.add('completed');
                 setTimeout(() => saveState(), 500);
             }
         }
-
         function handleActionButtons(e) {
             const logVikarmaBtn = e.target.closest('.log-vikarma-btn');
             const deleteKarmaBtn = e.target.closest('.delete-karma-btn');
             const logPrayashchitBtn = e.target.closest('.log-prayashchit-btn');
-
             if (!logVikarmaBtn && !deleteKarmaBtn && !logPrayashchitBtn) return;
-
             const karmaItem = e.target.closest('li[data-karma-id], li[data-type="prayashchit"]');
-
             if (logPrayashchitBtn) {
                 if (state.activePrayashchit && !state.activePrayashchit.completed) {
                     state.activePrayashchit.completed = true;
@@ -445,14 +407,12 @@
                 }
                 return;
             }
-
             const goalId = Number(karmaItem.dataset.goalId);
             const karmaId = Number(karmaItem.dataset.karmaId);
             const goal = state.goals.find(g => g.id === goalId);
             if (!goal) return;
             const karma = goal.karmas.find(k => k.id === karmaId);
             if (!karma) return;
-
             if (logVikarmaBtn) {
                 if (karma.completed) return;
                 karma.completed = true;
@@ -467,7 +427,6 @@
                 saveState();
             }
         }
-
         function handleDeleteGoal(e) {
             const deleteBtn = e.target.closest('.delete-goal-btn');
             if (!deleteBtn) return;
@@ -476,16 +435,13 @@
             showMessage('Practice removed.', 'info');
             saveState();
         }
-
         function endDay() {
             let finalDailyKarma = state.dailyKarma;
-
             if (state.activePrayashchit && !state.activePrayashchit.completed) {
                 finalDailyKarma += PRAYASHCHIT_PENALTY;
                 showMessage(`Prayashchit missed. ${PRAYASHCHIT_PENALTY} Karma.`, 'error');
             }
             state.activePrayashchit = null;
-
             let missedTaskCount = 0;
             state.goals.forEach(goal => {
                 goal.karmas.forEach(karma => {
@@ -495,13 +451,11 @@
                     }
                 });
             });
-
             if (missedTaskCount > 0) {
                 const penalty = missedTaskCount * KARMA_POINTS;
                 finalDailyKarma -= penalty;
                 showMessage(`${missedTaskCount} task(s) missed. -${penalty} Karma.`, 'error');
             }
-
             state.goals.forEach(goal => {
                 if (goal.completedToday) {
                     goal.satatya++;
@@ -521,7 +475,6 @@
                     goal.satatya = 0;
                 }
             });
-
             if (finalDailyKarma < 0) {
                 prayashchitModal.classList.remove('hidden');
                 prayashchitOptionsEl.innerHTML = '';
@@ -529,10 +482,8 @@
                     prayashchitOptionsEl.innerHTML += `<label class="flex items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg"><input type="radio" name="prayashchit" value="${p}" class="mr-3" ${i===0 ? 'checked' : ''}>${p}</label>`;
                 });
             }
-
             evaluateSatatya(finalDailyKarma < 0);
         }
-
         function evaluateSatatya(needsPrayashchit = false) {
             if (needsPrayashchit) {
                 const selectedOption = document.querySelector('input[name="prayashchit"]:checked');
@@ -540,19 +491,15 @@
                     state.activePrayashchit = { name: selectedOption.value, completed: false };
                 }
             }
-
             state.totalKarma += state.dailyKarma;
             state.dailyKarma = 0;
-
             state.goals.forEach(goal => {
                 goal.completedToday = false;
                 goal.karmas.forEach(k => k.completed = false);
             });
-
             showMessage(`Day complete! Your progress has been saved.`, "success");
             saveState();
         }
-
         let draggedItem = null;
         function getDragAfterElement(container, y) {
             const draggableElements = [...container.querySelectorAll('.karma-item:not(.dragging)')];
@@ -573,12 +520,10 @@
             if (draggedItem) {
                 draggedItem.classList.remove('dragging');
                 draggedItem = null;
-
                 const newOrderedIds = [...taskList.querySelectorAll('.karma-item')].map(item => ({
                     karmaId: Number(item.dataset.karmaId),
                     goalId: Number(item.dataset.goalId)
                 }));
-
                 let orderCounter = 0;
                 newOrderedIds.forEach(ids => {
                     if (!ids.goalId) return;
@@ -595,7 +540,6 @@
             if (afterElement == null) { taskList.appendChild(draggedItem); }
             else { taskList.insertBefore(draggedItem, afterElement); }
         });
-
         function showMessage(message, type = 'success') {
             const box = document.getElementById('message-box');
             box.textContent = message;
@@ -606,15 +550,53 @@
             box.classList.remove('hidden');
             setTimeout(() => box.classList.add('hidden'), 3000);
         }
-
-        function openBadgeModal(badgeName) { /* unchanged */ }
-        function closeBadgeModal() { /* unchanged */ }
-        function handleResetKarma() { /* unchanged */ }
-
+        function openBadgeModal(badgeName) {
+            const badge = badges.find(b => b.name === badgeName);
+            const isUnlocked = state.unlockedBadges.includes(badge.name);
+            const badgeModalContent = document.getElementById('badge-modal-content');
+            badgeModalContent.innerHTML = `<i class="fas ${badge.icon} text-6xl mb-4 ${isUnlocked ? badge.color : 'text-slate-400'}"></i><h2 class="text-3xl font-bold">${badge.name}</h2><p class="text-slate-500 dark:text-slate-400 mt-2">${isUnlocked ? `Unlocked by achieving ${badge.days} days of Sātatya.` : `Requires ${badge.days} days of Sātatya to unlock.`}</p><button id="close-badge-modal" class="mt-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-semibold py-2 px-6 rounded-lg">Close</button>`;
+            const badgeModal = document.getElementById('badge-modal');
+            badgeModal.classList.remove('hidden');
+            setTimeout(() => {
+                badgeModalContent.classList.remove('scale-95', 'opacity-0');
+            }, 10);
+        }
+        function closeBadgeModal() {
+            const badgeModal = document.getElementById('badge-modal');
+            const badgeModalContent = document.getElementById('badge-modal-content');
+            badgeModalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                badgeModal.classList.add('hidden');
+            }, 200);
+        }
+        function handleResetKarma() {
+            if (resetKarmaBtn.dataset.confirm === 'true') {
+                state.totalKarma = 0;
+                state.goals.forEach(g => g.totalPracticeKarma = 0);
+                showMessage('Your accumulated Karma has been reset.', 'info');
+                saveState();
+                resetKarmaBtn.textContent = 'Reset Accumulated Karma';
+                resetKarmaBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                resetKarmaBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
+                delete resetKarmaBtn.dataset.confirm;
+            } else {
+                resetKarmaBtn.textContent = 'Confirm Reset?';
+                resetKarmaBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
+                resetKarmaBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                resetKarmaBtn.dataset.confirm = 'true';
+                setTimeout(() => {
+                    if (resetKarmaBtn.dataset.confirm === 'true') {
+                        resetKarmaBtn.textContent = 'Reset Accumulated Karma';
+                        resetKarmaBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                        resetKarmaBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
+                        delete resetKarmaBtn.dataset.confirm;
+                    }
+                }, 3000);
+            }
+        }
         document.addEventListener('DOMContentLoaded', () => {
             gitaQuoteEl.textContent = `"${gitaQuotes[new Date().getDate() % gitaQuotes.length]}"`;
         });
-
         googleSigninBtn.addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).catch(error => showMessage(error.message, 'error'));
@@ -628,7 +610,6 @@
                 .catch(error => showMessage(error.message, 'error'));
         });
         signoutBtn.addEventListener('click', () => auth.signOut());
-
         menuBtn.addEventListener('click', () => toggleSidebar(true));
         sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
         addGoalBtn.addEventListener('click', addGoal);
@@ -637,28 +618,7 @@
         addKarmaBtn.addEventListener('click', openAddKarmaModal);
         addKarmaForm.addEventListener('submit', handleAddKarma);
         cancelAddKarmaBtn.addEventListener('click', () => addKarmaModal.classList.add('hidden'));
-        taskList.addEventListener('click', (e) => {
-            const fireOverlay = e.target.closest('.fire-overlay');
-            const actionButton = e.target.closest('button');
-
-            if (fireOverlay) { handleKarmaCompletion(e); return; }
-            if (actionButton) { handleActionButtons(e); return; }
-
-            const karmaItem = e.target.closest('.karma-item');
-            if (!karmaItem || karmaItem.dataset.type === 'prayashchit') return;
-
-            document.querySelectorAll('.fire-overlay').forEach(el => { if (el.parentElement !== karmaItem) el.remove(); });
-
-            const existingOverlay = karmaItem.querySelector('.fire-overlay');
-            if (existingOverlay) {
-                existingOverlay.remove();
-            } else if (karmaItem.dataset.type === 'karma') {
-                const newFireOverlay = document.createElement('div');
-                newFireOverlay.className = 'fire-overlay';
-                newFireOverlay.innerHTML = `<i class="fas fa-fire text-orange-500 text-4xl"></i>`;
-                karmaItem.appendChild(newFireOverlay);
-            }
-        });
+        taskList.addEventListener('click', handleTaskClick);
         resetDayBtn.addEventListener('click', endDay);
         acceptPrayashchitBtn.addEventListener('click', () => {
             prayashchitModal.classList.add('hidden');
@@ -671,36 +631,53 @@
         document.addEventListener('click', e => {
             if (e.target.id === 'badge-modal' || e.target.id === 'close-badge-modal') { closeBadgeModal(); }
         });
+    </script>
 
-        // -------- PWA hooks (Install prompt + SW registration) --------
-
-        // Register Service Worker from the ROOT path so it controls all pages.
+    <!-- PWA Service Worker and Install Prompt Logic -->
+    <script>
         if ('serviceWorker' in navigator) {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js').catch(console.error);
-          });
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('Karmyog ServiceWorker registration successful');
+                    })
+                    .catch(error => {
+                        console.log('Karmyog ServiceWorker registration failed: ', error);
+                    });
+            });
         }
 
-        // Handle install prompt (Chrome)
         let deferredPrompt;
         const installBtn = document.getElementById('installBtn');
 
         window.addEventListener('beforeinstallprompt', (e) => {
+          // Prevent the mini-infobar from appearing on mobile
           e.preventDefault();
+          // Stash the event so it can be triggered later.
           deferredPrompt = e;
+          // Update UI to notify the user they can install the PWA
           installBtn.style.display = 'inline-block';
+          console.log('`beforeinstallprompt` event was fired.');
         });
 
         installBtn.addEventListener('click', async () => {
-          if (!deferredPrompt) return;
-          deferredPrompt.prompt();
-          await deferredPrompt.userChoice;
-          deferredPrompt = null;
+          // Hide the app provided install promotion
           installBtn.style.display = 'none';
+          // Show the install prompt
+          deferredPrompt.prompt();
+          // Wait for the user to respond to the prompt
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log(`User response to the install prompt: ${outcome}`);
+          // We've used the prompt, and can't use it again, throw it away
+          deferredPrompt = null;
         });
 
         window.addEventListener('appinstalled', () => {
-          console.log('Karmyog installed');
+          // Hide the install button
+          installBtn.style.display = 'none';
+          // Clear the deferredPrompt so it can be garbage collected
+          deferredPrompt = null;
+          console.log('Karmyog was installed.');
         });
     </script>
 </body>
