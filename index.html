@@ -7,6 +7,7 @@
     
     <!-- PWA -->
     <meta name="theme-color" content="#1e293b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
 
@@ -43,6 +44,16 @@
           background: #4f46e5; color: #fff; cursor: pointer;
           display: none; z-index: 100;
         }
+
+        /* NEW: Badge Ceremony Animations */
+        .badge-ceremony-icon {
+            animation: spin-and-glow 1.5s ease-in-out;
+        }
+        @keyframes spin-and-glow {
+            0% { transform: scale(0.5) rotate(0deg); filter: drop-shadow(0 0 0px white); }
+            50% { transform: scale(1.2) rotate(360deg); filter: drop-shadow(0 0 15px white); }
+            100% { transform: scale(1) rotate(360deg); filter: drop-shadow(0 0 5px white); }
+        }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
@@ -53,16 +64,18 @@
             <h1 class="text-5xl font-bold text-white mb-2">Karmyog</h1>
             <p class="text-slate-400 mb-8">Sign in to begin your path of Abhyāsa.</p>
             <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl">
-                <button id="google-signin-btn" class="w-full bg-white hover:bg-slate-200 text-slate-800 font-semibold py-3 px-4 rounded-lg flex items-center justify-center transition-transform transform hover:scale-105">
+                <button id="google-signin-btn" class="w-full bg-white hover:bg-slate-200 text-slate-800 font-semibold py-3 px-4 rounded-lg flex items-center justify-center transition-transform transform hover:scale-105" aria-label="Sign in with Google">
                     <img src="https://www.google.com/favicon.ico" alt="Google icon" class="w-6 h-6 mr-3"> Sign in with Google
                 </button>
-                <!-- NEW: Fallback link for redirect sign-in -->
                 <a href="#" id="google-redirect-fallback" class="hidden mt-4 text-sm text-indigo-400 hover:text-indigo-300">Pop-up blocked? Try alternate sign-in</a>
                 
                 <div class="my-6 flex items-center"><hr class="w-full border-slate-600"><span class="px-4 text-slate-500 text-sm">OR</span><hr class="w-full border-slate-600"></div>
                 <form id="email-form">
                     <input type="email" id="email-input" placeholder="Email" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-4 border-2 border-transparent focus:border-indigo-500 focus:ring-0" required>
-                    <input type="password" id="password-input" placeholder="Password (6+ characters)" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-4 border-2 border-transparent focus:border-indigo-500 focus:ring-0" required>
+                    <input type="password" id="password-input" placeholder="Password (6+ characters)" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2 border-2 border-transparent focus:border-indigo-500 focus:ring-0" required>
+                    <div class="text-right mb-4">
+                        <button type="button" id="forgot-password-btn" class="text-xs text-indigo-300 hover:text-indigo-200 underline">Forgot password?</button>
+                    </div>
                     <div class="grid grid-cols-2 gap-3">
                         <button type="button" id="email-signin-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg">Sign In</button>
                         <button type="button" id="email-signup-btn" class="w-full bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-lg">Sign Up</button>
@@ -73,8 +86,8 @@
     </div>
 
     <!-- Sidebar -->
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
-    <div id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-800 shadow-xl z-40 transform -translate-x-full p-6 flex flex-col">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden" aria-hidden="true"></div>
+    <div id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-800 shadow-xl z-40 transform -translate-x-full p-6 flex flex-col" role="dialog" aria-label="Sidebar">
         <div class="flex-grow overflow-y-auto pr-2">
             <h2 class="text-2xl font-bold mb-6 text-slate-900 dark:text-white">Your Abhyāsa</h2>
             <div class="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mb-6">
@@ -96,9 +109,12 @@
     <!-- Main App Content -->
     <div id="app-container" class="hidden container mx-auto max-w-2xl p-4 sm:p-6">
         <header class="text-center mb-6 relative flex items-center justify-between">
-            <button id="menu-btn" class="text-2xl text-slate-800 dark:text-slate-200"><i class="fas fa-bars"></i></button>
+            <button id="menu-btn" class="text-2xl text-slate-800 dark:text-slate-200" aria-label="Open menu"><i class="fas fa-bars"></i></button>
             <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Karmyog</h1>
-            <button id="signout-btn" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold py-2 px-4 rounded-lg">Sign Out</button>
+            <div class="flex items-center gap-2">
+              <button id="theme-toggle-btn" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold py-2 px-3 rounded-lg" aria-label="Toggle dark mode">Theme</button>
+              <button id="signout-btn" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold py-2 px-4 rounded-lg">Sign Out</button>
+            </div>
         </header>
 
         <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-lg mb-6 sticky top-4 z-10 grid grid-cols-2 divide-x dark:divide-slate-700 text-center">
@@ -122,7 +138,7 @@
     </div>
 
     <!-- Modals -->
-    <div id="add-karma-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div id="add-karma-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Add New Action">
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full modal-enter">
             <h2 class="text-2xl font-bold mb-4">Add New Action</h2>
             <form id="add-karma-form">
@@ -142,9 +158,9 @@
             </form>
         </div>
     </div>
-    <div id="prayashchit-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div id="prayashchit-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Prayashchit">
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center modal-enter">
-            <i class="fas fa-person-praying text-5xl text-amber-600 mb-4"></i>
+            <i class="fas fa-person-praying text-5xl text-amber-600 mb-4" aria-hidden="true"></i>
             <h2 class="text-3xl font-bold">Prayashchit (Penance)</h2>
             <p class="mt-2 mb-6">Your daily Karma is negative. Choose a penance to restore balance for tomorrow:</p>
             <div id="prayashchit-options" class="space-y-3 text-left mb-6"></div>
@@ -155,10 +171,10 @@
             <button id="accept-prayashchit-btn" class="w-full mt-4 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg">Accept & End Day</button>
         </div>
     </div>
-    <div id="badge-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div id="badge-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Badge">
         <div id="badge-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center modal-enter"></div>
     </div>
-    <div id="summary-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div id="summary-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Daily Summary">
         <div id="summary-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center modal-enter"></div>
     </div>
 
@@ -166,12 +182,30 @@
     <button id="installBtn" type="button">Install Karmyog</button>
     <audio id="fire-sound" src="https://cdn.freesound.org/previews/25/25431_132334-lq.mp3" preload="auto"></audio>
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (kept compat & versions to avoid breaking changes) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
 
     <script>
+        // ---- Security: escape helper for any user-provided text ----
+        function esc(s) {
+            return String(s)
+              .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+              .replace(/>/g,"&gt;").replace(/"/g,"&quot;")
+              .replace(/'/g,"&#39;");
+        }
+
+        // ---- Theme management ----
+        function setTheme(dark) {
+            document.documentElement.classList.toggle('dark', dark);
+            try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(e){}
+        }
+        (function initTheme(){
+            const saved = (() => { try { return localStorage.getItem('theme'); } catch(e){ return null; }})();
+            setTheme(saved ? saved === 'dark' : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        })();
+
         const firebaseConfig = {
             apiKey: "AIzaSyA1YxzDZzzyIuAxjxzo_Vy3d8CLtHoBK44",
             authDomain: "karmyog-6da5f.firebaseapp.com",
@@ -191,12 +225,14 @@
             authOverlay: document.getElementById('auth-overlay'),
             appContainer: document.getElementById('app-container'),
             googleSigninBtn: document.getElementById('google-signin-btn'),
-            googleRedirectFallback: document.getElementById('google-redirect-fallback'), // NEW
+            googleRedirectFallback: document.getElementById('google-redirect-fallback'),
             emailSigninBtn: document.getElementById('email-signin-btn'),
             emailSignupBtn: document.getElementById('email-signup-btn'),
+            forgotPasswordBtn: document.getElementById('forgot-password-btn'),
             emailInput: document.getElementById('email-input'),
             passwordInput: document.getElementById('password-input'),
             signoutBtn: document.getElementById('signout-btn'),
+            themeToggleBtn: document.getElementById('theme-toggle-btn'),
             dailyKarmaScoreEl: document.getElementById('daily-karma-score'),
             totalKarmaScoreEl: document.getElementById('total-karma-score'),
             gitaQuoteEl: document.getElementById('gita-quote'),
@@ -227,12 +263,36 @@
             summaryModalContent: document.getElementById('summary-modal-content')
         };
 
+        // --- Helpers ---
+        const makeId = () => (crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+
         // --- App State & Constants ---
         let state = {};
         let unsubscribe;
+        let pendingFinalDailyKarma = null; // single source of truth for end-of-day total
+
         const defaultState = { totalKarma: 0, dailyKarma: 0, goals: [], unlockedBadges: [], dailyActions: [], customPrayashchits: [] };
-        const badges = [ { days: 9, name: 'Arjuna', icon: 'fa-user-graduate', color: 'text-slate-500', meaning: 'The focused warrior, beginning the path.' }, { days: 18, name: 'Sthitaprajña', icon: 'fa-brain', color: 'text-sky-500', meaning: 'One of steady wisdom, undisturbed by dualities.' }, { days: 27, name: 'Yuktah', icon: 'fa-link', color: 'text-blue-500', meaning: 'One who is linked in yoga, harmonious.' }, { days: 36, name: 'Niyatam', icon: 'fa-calendar-check', color: 'text-indigo-500', meaning: 'One who performs prescribed duties consistently.' }, { days: 45, name: 'Akartā', icon: 'fa-hand-paper', color: 'text-purple-500', meaning: 'The non-doer, realizing the self is not the agent.' }, { days: 54, name: 'Tyāgī', icon: 'fa-leaf', color: 'text-emerald-500', meaning: 'The renouncer of the fruits of action.' }, { days: 63, name: 'Samatvam', icon: 'fa-scale-balanced', color: 'text-lime-500', meaning: 'One who maintains equanimity in success and failure.' }, { days: 72, name: 'Bhakta', icon: 'fa-heart', color: 'text-rose-500', meaning: 'A devoted soul, connected with love.' }, { days: 81, name: 'Jñānī', icon: 'fa-book-open', color: 'text-amber-500', meaning: 'One who possesses true knowledge.' }, { days: 90, name: 'Yogī', icon: 'fa-om', color: 'text-orange-500', meaning: 'A master of the self, united with the divine.' }, { days: 99, name: 'Brahmabhūta', icon: 'fa-star-of-life', color: 'text-yellow-400', meaning: 'One who has attained the Brahman platform.' }, { days: 108, name: 'Ātmarāma', icon: 'fa-sun', color: 'text-yellow-300', meaning: 'One who rejoices in the Self.' } ];
-        const gitaQuotes = [ "You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions. - 2.47", "Perform your obligatory duty, because action is indeed better than inaction. - 3.8", "The wise see inaction in action and action in inaction. - 4.18", "One who performs their duty without attachment, surrendering the results to the Supreme Lord, is unaffected by sinful action. - 5.10", "It is better to live your own destiny imperfectly than to live an imitation of somebody else's life with perfection. - 3.35" ];
+        const badges = [
+            { days: 9, name: 'Arjuna', icon: 'fa-user-graduate', color: 'text-slate-500', meaning: 'The focused warrior, beginning the path.' },
+            { days: 18, name: 'Sthitaprajña', icon: 'fa-brain', color: 'text-sky-500', meaning: 'One of steady wisdom, undisturbed by dualities.' },
+            { days: 27, name: 'Yuktah', icon: 'fa-link', color: 'text-blue-500', meaning: 'One who is linked in yoga, harmonious.' },
+            { days: 36, name: 'Niyatam', icon: 'fa-calendar-check', color: 'text-indigo-500', meaning: 'One who performs prescribed duties consistently.' },
+            { days: 45, name: 'Akartā', icon: 'fa-hand-paper', color: 'text-purple-500', meaning: 'The non-doer, realizing the self is not the agent.' },
+            { days: 54, name: 'Tyāgī', icon: 'fa-leaf', color: 'text-emerald-500', meaning: 'The renouncer of the fruits of action.' },
+            { days: 63, name: 'Samatvam', icon: 'fa-scale-balanced', color: 'text-lime-500', meaning: 'One who maintains equanimity in success and failure.' },
+            { days: 72, name: 'Bhakta', icon: 'fa-heart', color: 'text-rose-500', meaning: 'A devoted soul, connected with love.' },
+            { days: 81, name: 'Jñānī', icon: 'fa-book-open', color: 'text-amber-500', meaning: 'One who possesses true knowledge.' },
+            { days: 90, name: 'Yogī', icon: 'fa-om', color: 'text-orange-500', meaning: 'A master of the self, united with the divine.' },
+            { days: 99, name: 'Brahmabhūta', icon: 'fa-star-of-life', color: 'text-yellow-400', meaning: 'One who has attained the Brahman platform.' },
+            { days: 108, name: 'Ātmarāma', icon: 'fa-sun', color: 'text-yellow-300', meaning: 'One who rejoices in the Self.' }
+        ];
+        const gitaQuotes = [
+            "You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions. - 2.47",
+            "Perform your obligatory duty, because action is indeed better than inaction. - 3.8",
+            "The wise see inaction in action and action in inaction. - 4.18",
+            "One who performs their duty without attachment, surrendering the results to the Supreme Lord, is unaffected by sinful action. - 5.10",
+            "It is better to live your own destiny imperfectly than to live an imitation of somebody else's life with perfection. - 3.35"
+        ];
         const prayashchitList = [ "Take a cold water bath", "Avoid all sugar for 24 hours", "Use stairs instead of the lift", "30 minutes of selfless service (seva)", "Maintain silence for 2 hours" ];
 
         // --- Firebase & State Management ---
@@ -252,7 +312,7 @@
         auth.getRedirectResult()
             .then((result) => {
                 if (result.user) {
-                    showMessage(`Welcome, ${result.user.displayName}!`, 'success');
+                    showMessage(`Welcome, ${result.user.displayName || 'friend'}!`, 'success');
                 }
             }).catch((error) => {
                 if (error.code !== 'auth/no-auth-event') {
@@ -267,7 +327,11 @@
                 if (!state.dailyActions) state.dailyActions = [];
                 if (!state.goals) state.goals = [];
                 if (!state.customPrayashchits) state.customPrayashchits = [];
-                state.goals.forEach(g => { if (g.totalPracticeKarma === undefined) g.totalPracticeKarma = 0; });
+                state.goals.forEach(g => { 
+                    if (g.totalPracticeKarma === undefined) g.totalPracticeKarma = 0;
+                    if (g.completedOneToday === undefined) g.completedOneToday = false;
+                    if (g.hadTasksToday === undefined) g.hadTasksToday = false;
+                });
                 if (!doc.exists) saveState();
                 renderAll();
             });
@@ -280,7 +344,7 @@
             }
         }
 
-        // --- All other functions (renderAll, renderSidebar, etc.) remain the same ---
+        // --- Rendering Engine ---
         function renderAll() {
             if (!state.goals) return;
             renderSidebar();
@@ -292,13 +356,15 @@
             dom.sidebarGoalList.innerHTML = '';
             if (state.goals.length > 0) {
                 state.goals.forEach(goal => {
+                    const goalIdStr = String(goal.id);
                     dom.sidebarGoalList.innerHTML += `
                         <div class="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg">
-                            <span class="font-semibold">${goal.name}</span>
+                            <span class="font-semibold">${esc(goal.name)}</span>
                             <div class="text-right flex-shrink-0 ml-2">
-                                <p class="font-bold text-sm">Sātatya: ${goal.satatya}</p>
+                                <p class="font-bold text-sm">Sātatya: ${goal.satatya || 0}</p>
                                 <p class="text-xs text-slate-400">Karma: ${goal.totalPracticeKarma || 0}</p>
                             </div>
+                            <button class="delete-goal-btn text-slate-400 hover:text-red-500 ml-2" data-goal-id="${goalIdStr}" aria-label="Delete practice"><i class="fas fa-trash"></i></button>
                         </div>`;
                 });
             } else {
@@ -313,23 +379,27 @@
                 dom.taskList.innerHTML = `<p class="text-center text-slate-500 italic py-8">A fresh start. Add your actions for today.</p>`;
                 return;
             }
-            state.dailyActions.sort((a, b) => a.order - b.order).forEach(task => {
+            state.dailyActions.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(task => {
                 const li = document.createElement('li');
                 li.className = 'karma-item bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md';
-                li.dataset.id = task.id;
+                li.dataset.id = String(task.id);
                 li.draggable = true;
                 
-                const goal = state.goals.find(g => g.id === task.goalId);
+                const goal = state.goals.find(g => String(g.id) === String(task.goalId));
                 const goalName = goal ? goal.name : 'Penance';
+                const deleteBtnHTML = `<button class="delete-task-btn text-slate-400 hover:text-red-500 text-xs ml-2" aria-label="Delete action"><i class="fas fa-times"></i></button>`;
+
+                const safeName = esc(task.name);
+                const safeGoalName = esc(goalName);
 
                 if (task.type === 'prayashchit') {
                     li.classList.add('prayashchit-card');
-                    li.innerHTML = `<div class="flex items-center"><i class="fas fa-person-praying text-amber-500 mr-4"></i><div><p class="font-semibold text-lg">${task.name}</p><p class="text-xs text-slate-400">Prayashchit (from yesterday)</p></div></div>`;
+                    li.innerHTML = `<div class="flex items-center"><i class="fas fa-person-praying text-amber-500 mr-4" aria-hidden="true"></i><div><p class="font-semibold text-lg">${safeName}</p><p class="text-xs text-slate-400">Prayashchit (from yesterday)</p></div></div>`;
                 } else if (task.type === 'karma') {
-                    li.innerHTML = `<div class="flex items-center justify-between"><div class="flex items-center"><i class="fas fa-leaf text-green-500 mr-4"></i><div><p class="font-semibold text-lg">${task.name}</p><p class="text-xs text-slate-400">${goalName}</p></div></div><div class="flex items-center"><span class="font-bold text-green-500 mx-2">+1</span></div></div>`;
+                    li.innerHTML = `<div class="flex items-center justify-between"><div class="flex items-center"><i class="fas fa-leaf text-green-500 mr-4" aria-hidden="true"></i><div><p class="font-semibold text-lg">${safeName}</p><p class="text-xs text-slate-400">${safeGoalName}</p></div></div><div class="flex items-center"><span class="font-bold text-green-500 mx-2">+1</span>${deleteBtnHTML}</div></div>`;
                 } else { // Vikarma
                     li.classList.add('vikarma-card');
-                    li.innerHTML = `<div class="flex items-center justify-between"><div class="flex items-center"><i class="fas fa-leaf text-slate-400 mr-4"></i><div><p class="font-semibold text-lg">${task.name}</p><p class="text-xs text-slate-400">${goalName}</p></div></div><div class="flex items-center"><span class="font-bold text-red-500">-1</span><button class="log-vikarma-btn text-xs bg-red-500 text-white px-3 py-1 rounded-md mx-2">Log</button></div></div>`;
+                    li.innerHTML = `<div class="flex items-center justify-between"><div class="flex items-center"><i class="fas fa-leaf text-slate-400 mr-4" aria-hidden="true"></i><div><p class="font-semibold text-lg">${safeName}</p><p class="text-xs text-slate-400">${safeGoalName}</p></div></div><div class="flex items-center"><span class="font-bold text-red-500">-1</span><button class="log-vikarma-btn text-xs bg-red-500 text-white px-3 py-1 rounded-md mx-2" aria-label="Log negative action">Log</button>${deleteBtnHTML}</div></div>`;
                 }
                 dom.taskList.appendChild(li);
             });
@@ -338,19 +408,19 @@
         function renderBadges() {
             dom.sidebarBadgeContainer.innerHTML = '';
             badges.forEach(badge => {
-                const isUnlocked = state.unlockedBadges.includes(badge.name);
+                const isUnlocked = Array.isArray(state.unlockedBadges) && state.unlockedBadges.includes(badge.name);
                 const badgeEl = document.createElement('div');
                 badgeEl.className = `badge p-2 rounded-lg cursor-pointer ${isUnlocked ? 'unlocked' : 'locked'}`;
                 badgeEl.title = isUnlocked ? `${badge.name} - Unlocked!` : `${badge.name} - Locked`;
                 badgeEl.dataset.badgeName = badge.name;
-                badgeEl.innerHTML = `<i class="fas ${badge.icon} text-3xl ${isUnlocked ? badge.color : 'text-slate-400'}"></i>`;
+                badgeEl.innerHTML = `<i class="fas ${badge.icon} text-3xl ${isUnlocked ? badge.color : 'text-slate-400'}" aria-hidden="true"></i>`;
                 dom.sidebarBadgeContainer.appendChild(badgeEl);
             });
         }
         
         function updateStats() {
-            animateValue(dom.dailyKarmaScoreEl, state.dailyKarma);
-            animateValue(dom.totalKarmaScoreEl, state.totalKarma);
+            animateValue(dom.dailyKarmaScoreEl, state.dailyKarma || 0);
+            animateValue(dom.totalKarmaScoreEl, state.totalKarma || 0);
             [dom.dailyKarmaScoreEl, dom.totalKarmaScoreEl].forEach(el => {
                 const value = parseInt(el.textContent) || 0;
                 el.classList.remove('karma-positive', 'karma-negative', 'karma-neutral');
@@ -360,28 +430,35 @@
             });
         }
 
+        // --- Core Logic & UI Interactions ---
         function addGoal() {
             const name = dom.goalNameInput.value.trim();
             if (!name) { showMessage("Practice name cannot be empty.", "error"); return; }
-            state.goals.push({ id: Date.now(), name, satatya: 0, totalPracticeKarma: 0 });
+            state.goals.push({ id: makeId(), name, satatya: 0, totalPracticeKarma: 0, hadTasksToday: false, completedOneToday: false });
             dom.goalNameInput.value = '';
             saveState();
         }
 
         function openAddKarmaModal() {
             if (state.goals.length === 0) { showMessage("Please create a Practice first.", "error"); return; }
-            dom.karmaGoalSelect.innerHTML = state.goals.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+            dom.karmaGoalSelect.innerHTML = state.goals.map(g => `<option value="${String(g.id)}">${esc(g.name)}</option>`).join('');
             dom.addKarmaForm.reset();
             dom.addKarmaModal.classList.remove('hidden');
         }
 
         function handleAddKarma(e) {
             e.preventDefault();
-            const goalId = Number(dom.karmaGoalSelect.value);
+            const goalId = String(dom.karmaGoalSelect.value);
             const name = dom.addKarmaForm.querySelector('#karma-name').value.trim();
             const type = dom.addKarmaForm.querySelector('#karma-type').value;
             if (!name) { showMessage("Action name is required.", "error"); return; }
-            state.dailyActions.push({ id: Date.now(), name, type, goalId, order: state.dailyActions.length });
+            
+            const goal = state.goals.find(g => String(g.id) === goalId);
+            if (goal && type === 'karma') {
+                goal.hadTasksToday = true;
+            }
+
+            state.dailyActions.push({ id: makeId(), name, type, goalId, order: state.dailyActions.length });
             dom.addKarmaModal.classList.add('hidden');
             saveState();
         }
@@ -389,12 +466,15 @@
         function handleTaskClick(e) {
             const fireOverlay = e.target.closest('.fire-overlay');
             const logVikarmaBtn = e.target.closest('.log-vikarma-btn');
+            const deleteBtn = e.target.closest('.delete-task-btn');
+
             if (fireOverlay) { handleKarmaCompletion(e); return; }
             if (logVikarmaBtn) { handleVikarmaLog(e); return; }
+            if (deleteBtn) { handleDeleteTask(e); return; }
 
             const karmaItem = e.target.closest('.karma-item');
             if (!karmaItem) return;
-            const task = state.dailyActions.find(t => t.id === Number(karmaItem.dataset.id));
+            const task = state.dailyActions.find(t => String(t.id) === String(karmaItem.dataset.id));
             if (!task || task.type === 'vikarma' || task.type === 'prayashchit') return;
             
             document.querySelectorAll('.fire-overlay').forEach(el => { if (el.parentElement !== karmaItem) el.remove(); });
@@ -404,7 +484,7 @@
             } else {
                 const newFireOverlay = document.createElement('div');
                 newFireOverlay.className = 'fire-overlay';
-                newFireOverlay.innerHTML = `<i class="fas fa-fire text-orange-500 text-4xl"></i>`;
+                newFireOverlay.innerHTML = `<i class="fas fa-fire text-orange-500 text-4xl" aria-hidden="true"></i>`;
                 karmaItem.appendChild(newFireOverlay);
             }
         }
@@ -412,20 +492,22 @@
         function handleKarmaCompletion(e) {
             const karmaItem = e.target.closest('.karma-item');
             if (!karmaItem) return;
-            const taskId = Number(karmaItem.dataset.id);
-            const taskIndex = state.dailyActions.findIndex(t => t.id === taskId);
+            const taskId = String(karmaItem.dataset.id);
+            const taskIndex = state.dailyActions.findIndex(t => String(t.id) === taskId);
             if (taskIndex === -1) return;
 
             const task = state.dailyActions[taskIndex];
-            const goal = state.goals.find(g => g.id === task.goalId);
+            const goal = state.goals.find(g => String(g.id) === String(task.goalId));
 
-            state.dailyKarma += 1;
-            if (goal) goal.totalPracticeKarma += 1;
+            state.dailyKarma = (state.dailyKarma || 0) + 1;
+            if (goal) {
+                goal.totalPracticeKarma = (goal.totalPracticeKarma || 0) + 1;
+                goal.completedOneToday = true;
+            }
             
             state.dailyActions.splice(taskIndex, 1);
             
-            dom.fireSound.currentTime = 0;
-            dom.fireSound.play().catch(()=>{});
+            try { dom.fireSound.currentTime = 0; dom.fireSound.play().catch(()=>{}); } catch(e){}
             if (navigator.vibrate) navigator.vibrate(50);
             
             karmaItem.classList.add('completed');
@@ -435,15 +517,15 @@
         function handleVikarmaLog(e) {
             const karmaItem = e.target.closest('.karma-item');
             if (!karmaItem) return;
-            const taskId = Number(karmaItem.dataset.id);
-            const taskIndex = state.dailyActions.findIndex(t => t.id === taskId);
+            const taskId = String(karmaItem.dataset.id);
+            const taskIndex = state.dailyActions.findIndex(t => String(t.id) === taskId);
             if (taskIndex === -1) return;
 
             const task = state.dailyActions[taskIndex];
-            const goal = state.goals.find(g => g.id === task.goalId);
+            const goal = state.goals.find(g => String(g.id) === String(task.goalId));
 
-            state.dailyKarma -= 1;
-            if (goal) goal.totalPracticeKarma -= 1;
+            state.dailyKarma = (state.dailyKarma || 0) - 1;
+            if (goal) goal.totalPracticeKarma = (goal.totalPracticeKarma || 0) - 1;
             
             state.dailyActions.splice(taskIndex, 1);
             
@@ -453,50 +535,61 @@
             setTimeout(saveState, 500);
         }
 
+        function handleDeleteTask(e) {
+            const karmaItem = e.target.closest('.karma-item');
+            if (!karmaItem) return;
+            const taskId = String(karmaItem.dataset.id);
+            state.dailyActions = state.dailyActions.filter(t => String(t.id) !== taskId);
+            showMessage('Action removed.', 'info');
+            saveState();
+        }
+
+        function handleDeleteGoal(e) {
+            const goalId = String(e.target.closest('.delete-goal-btn').dataset.goalId);
+            state.goals = state.goals.filter(g => String(g.id) !== goalId);
+            state.dailyActions = state.dailyActions.filter(t => String(t.goalId) !== goalId);
+            showMessage('Practice removed.', 'info');
+            saveState();
+        }
+
         function endDay() {
-            let finalDailyKarma = state.dailyKarma;
+            let finalDailyKarma = state.dailyKarma || 0;
             const missedKarmas = state.dailyActions.filter(t => t.type === 'karma');
-            
             missedKarmas.forEach(() => { finalDailyKarma -= 1; });
 
-            const completedGoals = new Set();
-            const allGoalsWithTasks = new Set(state.dailyActions.filter(t => t.type === 'karma').map(t => t.goalId));
-            
             state.goals.forEach(goal => {
-                const hadTasks = allGoalsWithTasks.has(goal.id);
-                const completedAllTasksForGoal = hadTasks && !state.dailyActions.some(t => t.goalId === goal.id && t.type === 'karma');
-                if (completedAllTasksForGoal) {
-                    completedGoals.add(goal.id);
-                }
-            });
-
-            state.goals.forEach(goal => {
-                const hadTasks = allGoalsWithTasks.has(goal.id);
-                if (hadTasks && completedGoals.has(goal.id)) {
-                    goal.satatya += 1;
+                if (goal.hadTasksToday && goal.completedOneToday) {
+                    goal.satatya = (goal.satatya || 0) + 1;
                     badges.forEach(badge => {
-                        if (goal.satatya === badge.days && !state.unlockedBadges.includes(badge.name)) {
+                        if (goal.satatya === badge.days && (!state.unlockedBadges || !state.unlockedBadges.includes(badge.name))) {
+                            state.unlockedBadges = state.unlockedBadges || [];
                             state.unlockedBadges.push(badge.name);
                             setTimeout(() => showBadgeUnlockModal(badge), 500);
                         }
                     });
-                } else if (hadTasks) {
+                } else if (goal.hadTasksToday) {
                     goal.satatya = 0;
                 }
             });
             
+            pendingFinalDailyKarma = finalDailyKarma;
             showSummaryModal(finalDailyKarma, missedKarmas.length);
         }
 
         function finalizeDay(finalDailyKarma, prayashchitChoice = null) {
-            state.totalKarma += finalDailyKarma;
+            state.totalKarma = (state.totalKarma || 0) + finalDailyKarma;
             state.dailyKarma = 0;
             state.dailyActions = [];
             
-            if (prayashchitChoice) {
-                state.dailyActions.push({ id: Date.now(), name: prayashchitChoice, type: 'prayashchit', goalId: null, order: 0 });
-            }
+            state.goals.forEach(g => {
+                g.hadTasksToday = false;
+                g.completedOneToday = false;
+            });
             
+            if (prayashchitChoice) {
+                state.dailyActions.push({ id: makeId(), name: prayashchitChoice, type: 'prayashchit', goalId: null, order: 0 });
+            }
+            pendingFinalDailyKarma = null;
             saveState();
         }
 
@@ -524,8 +617,8 @@
             if (draggedItem) {
                 draggedItem.classList.remove('dragging');
                 draggedItem = null;
-                const newOrderedIds = [...dom.taskList.querySelectorAll('.karma-item')].map(item => Number(item.dataset.id));
-                state.dailyActions.forEach(task => { task.order = newOrderedIds.indexOf(task.id); });
+                const newOrderedIds = [...dom.taskList.querySelectorAll('.karma-item')].map(item => String(item.dataset.id));
+                state.dailyActions.forEach(task => { task.order = newOrderedIds.indexOf(String(task.id)); });
                 saveState();
             }
         });
@@ -553,7 +646,7 @@
 
         function animateValue(element, targetValue) {
             const startValue = parseInt(element.textContent.replace(/,/g, '')) || 0;
-            if (startValue === targetValue) { element.textContent = targetValue; return; };
+            if (startValue === targetValue) { element.textContent = targetValue; return; }
             const duration = 300;
             let startTime = null;
             const step = (currentTime) => {
@@ -567,7 +660,7 @@
         
         function showBadgeUnlockModal(badge) {
             dom.badgeModalContent.innerHTML = `
-                <i class="fas ${badge.icon} text-6xl mb-4 ${badge.color} animate-pulse"></i>
+                <i class="fas ${badge.icon} text-6xl mb-4 ${badge.color} badge-ceremony-icon" aria-hidden="true"></i>
                 <h2 class="text-3xl font-bold">Badge Unlocked!</h2>
                 <p class="text-xl mt-2">${badge.name}</p>
                 <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${badge.meaning}"</p>
@@ -577,7 +670,7 @@
         
         function showBadgeInfoModal(badge) {
             dom.badgeModalContent.innerHTML = `
-                <i class="fas ${badge.icon} text-6xl mb-4 text-slate-400"></i>
+                <i class="fas ${badge.icon} text-6xl mb-4 text-slate-400" aria-hidden="true"></i>
                 <h2 class="text-3xl font-bold">${badge.name}</h2>
                 <p class="text-slate-500 dark:text-slate-400 mt-2">Requires ${badge.days} days of Sātatya in a single practice to unlock.</p>
                 <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${badge.meaning}"</p>
@@ -605,16 +698,18 @@
         }
 
         function renderPrayashchitOptions() {
-            const allOptions = [...prayashchitList, ...state.customPrayashchits];
+            const allOptions = [...prayashchitList, ...(state.customPrayashchits || [])];
             dom.prayashchitOptionsEl.innerHTML = '';
             [...allOptions].sort(() => 0.5 - Math.random()).slice(0, 3).forEach((p, i) => {
-                dom.prayashchitOptionsEl.innerHTML += `<label class="flex items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg"><input type="radio" name="prayashchit" value="${p}" class="mr-3" ${i===0 ? 'checked' : ''}>${p}</label>`;
+                const pSafe = esc(p);
+                dom.prayashchitOptionsEl.innerHTML += `<label class="flex items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg"><input type="radio" name="prayashchit" value="${pSafe}" class="mr-3" ${i===0 ? 'checked' : ''}>${pSafe}</label>`;
             });
         }
         
         function addCustomPrayashchit() {
             const newPrayashchit = dom.customPrayashchitInput.value.trim();
-            if (newPrayashchit && !state.customPrayashchits.includes(newPrayashchit)) {
+            if (newPrayashchit && !(state.customPrayashchits || []).includes(newPrayashchit)) {
+                state.customPrayashchits = state.customPrayashchits || [];
                 state.customPrayashchits.push(newPrayashchit);
                 dom.customPrayashchitInput.value = '';
                 renderPrayashchitOptions();
@@ -662,11 +757,9 @@
         // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => { dom.gitaQuoteEl.textContent = `"${gitaQuotes[new Date().getDate() % gitaQuotes.length]}"`; });
         
-        // **NEW** INTELLIGENT AUTH LOGIC
         dom.googleSigninBtn.addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).catch(error => {
-                // If pop-up fails, show the fallback link
                 if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
                     dom.googleRedirectFallback.classList.remove('hidden');
                     showMessage('Pop-up was closed. Use the alternate link if needed.', 'error');
@@ -684,10 +777,17 @@
 
         dom.emailSignupBtn.addEventListener('click', () => { auth.createUserWithEmailAndPassword(dom.emailInput.value, dom.passwordInput.value).catch(e => showMessage(e.message, 'error')); });
         dom.emailSigninBtn.addEventListener('click', () => { auth.signInWithEmailAndPassword(dom.emailInput.value, dom.passwordInput.value).catch(e => showMessage(e.message, 'error')); });
+        dom.forgotPasswordBtn.addEventListener('click', async () => {
+            const email = dom.emailInput.value.trim();
+            if (!email) { showMessage('Enter your email above first.', 'error'); return; }
+            try { await auth.sendPasswordResetEmail(email); showMessage('Password reset email sent.', 'success'); }
+            catch (e) { showMessage(e.message, 'error'); }
+        });
         dom.signoutBtn.addEventListener('click', () => auth.signOut());
         dom.menuBtn.addEventListener('click', () => toggleSidebar(true));
         dom.sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
         dom.addGoalBtn.addEventListener('click', addGoal);
+        dom.sidebarGoalList.addEventListener('click', (e) => { if(e.target.closest('.delete-goal-btn')) handleDeleteGoal(e); });
         dom.addKarmaBtn.addEventListener('click', openAddKarmaModal);
         dom.addKarmaForm.addEventListener('submit', handleAddKarma);
         dom.cancelAddKarmaBtn.addEventListener('click', () => closeModal('add-karma-modal'));
@@ -699,24 +799,21 @@
             if (!badgeEl) return;
             const badge = badges.find(b => b.name === badgeEl.dataset.badgeName);
             if (!badge) return;
-            
-            if (badgeEl.classList.contains('unlocked')) {
-                showBadgeUnlockModal(badge);
-            } else {
-                showBadgeInfoModal(badge);
-            }
+            if (badgeEl.classList.contains('unlocked')) { showBadgeUnlockModal(badge); } else { showBadgeInfoModal(badge); }
         });
         dom.addCustomPrayashchitBtn.addEventListener('click', addCustomPrayashchit);
         dom.acceptPrayashchitBtn.addEventListener('click', () => {
-            const choice = document.querySelector('input[name="prayashchit"]:checked').value;
-            const finalDailyKarma = state.dailyKarma - state.dailyActions.filter(t => t.type === 'karma').length;
+            const selected = document.querySelector('input[name="prayashchit"]:checked');
+            const choice = selected ? selected.value : null;
+            const finalDailyKarma = (pendingFinalDailyKarma !== null) ? pendingFinalDailyKarma : ((state.dailyKarma || 0) - state.dailyActions.filter(t => t.type === 'karma').length);
             closeModal('prayashchit-modal');
             finalizeDay(finalDailyKarma, choice);
         });
         document.addEventListener('click', e => { if (e.target.id === 'badge-modal') closeModal('badge-modal'); });
+        dom.themeToggleBtn.addEventListener('click', () => setTheme(!document.documentElement.classList.contains('dark')));
     </script>
 
-    <!-- PWA Service Worker and Install Prompt Logic -->
+    <!-- PWA Service Worker and Install Prompt Logic (unchanged) -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -734,9 +831,11 @@
         });
         installBtn.addEventListener('click', async () => {
           installBtn.style.display = 'none';
-          deferredPrompt.prompt();
-          await deferredPrompt.userChoice;
-          deferredPrompt = null;
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            deferredPrompt = null;
+          }
         });
         window.addEventListener('appinstalled', () => {
           installBtn.style.display = 'none';
