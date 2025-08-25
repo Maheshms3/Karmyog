@@ -269,7 +269,7 @@
         // --- App State & Constants ---
         let state = {};
         let unsubscribe;
-        let pendingFinalDailyKarma = null; // single source of truth for end-of-day total
+        let pendingFinalDailyKarma = null;
 
         const defaultState = { totalKarma: 0, dailyKarma: 0, goals: [], unlockedBadges: [], dailyActions: [], customPrayashchits: [] };
         const badges = [
@@ -662,8 +662,8 @@
             dom.badgeModalContent.innerHTML = `
                 <i class="fas ${badge.icon} text-6xl mb-4 ${badge.color} badge-ceremony-icon" aria-hidden="true"></i>
                 <h2 class="text-3xl font-bold">Badge Unlocked!</h2>
-                <p class="text-xl mt-2">${badge.name}</p>
-                <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${badge.meaning}"</p>
+                <p class="text-xl mt-2">${esc(badge.name)}</p>
+                <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${esc(badge.meaning)}"</p>
                 <button onclick="closeModal('badge-modal')" class="mt-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-semibold py-2 px-6 rounded-lg">Continue</button>`;
             dom.badgeModal.classList.remove('hidden');
         }
@@ -671,9 +671,9 @@
         function showBadgeInfoModal(badge) {
             dom.badgeModalContent.innerHTML = `
                 <i class="fas ${badge.icon} text-6xl mb-4 text-slate-400" aria-hidden="true"></i>
-                <h2 class="text-3xl font-bold">${badge.name}</h2>
+                <h2 class="text-3xl font-bold">${esc(badge.name)}</h2>
                 <p class="text-slate-500 dark:text-slate-400 mt-2">Requires ${badge.days} days of Sātatya in a single practice to unlock.</p>
-                <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${badge.meaning}"</p>
+                <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${esc(badge.meaning)}"</p>
                 <button onclick="closeModal('badge-modal')" class="mt-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-semibold py-2 px-6 rounded-lg">Close</button>`;
             dom.badgeModal.classList.remove('hidden');
         }
@@ -843,4 +843,4 @@
         });
     </script>
 </body>
-</html>
+</ht
