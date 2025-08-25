@@ -1,19 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Karmyog - Your Path of Abhyāsa</title>
     
     <!-- PWA -->
-    <meta name="theme-color" content="#1e293b">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <meta name="theme-color" content="#1e293b" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png" />
 
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+      /* Enable class-based dark mode */
+      tailwind.config = { darkMode: 'class' };
+    </script>
+
+    <!-- Fonts / Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     
     <style>
         body { font-family: 'Inter', sans-serif; user-select: none; overflow-x: hidden; }
@@ -45,9 +52,7 @@
           display: none; z-index: 100;
         }
 
-        .badge-ceremony-icon {
-            animation: spin-and-glow 1.5s ease-in-out;
-        }
+        .badge-ceremony-icon { animation: spin-and-glow 1.5s ease-in-out; }
         @keyframes spin-and-glow {
             0% { transform: scale(0.5) rotate(0deg); filter: drop-shadow(0 0 0px white); }
             50% { transform: scale(1.2) rotate(360deg); filter: drop-shadow(0 0 15px white); }
@@ -101,7 +106,7 @@
         </div>
         <div class="mt-auto pt-6 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
              <button id="reset-karma-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors mb-4">Reset Accumulated Karma</button>
-             <button id="reset-day-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg">End Day & Evaluate</button>
+             <button id="reset-day-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg">End Day &amp; Evaluate</button>
         </div>
     </div>
 
@@ -167,7 +172,7 @@
                 <input type="text" id="custom-prayashchit-input" placeholder="Or add your own..." class="w-full bg-slate-100 dark:bg-slate-700 p-2 rounded-md mb-2">
                 <button id="add-custom-prayashchit-btn" class="w-full bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2 rounded-md text-sm">Add Custom Penance</button>
             </div>
-            <button id="accept-prayashchit-btn" class="w-full mt-4 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg">Accept & End Day</button>
+            <button id="accept-prayashchit-btn" class="w-full mt-4 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg">Accept &amp; End Day</button>
         </div>
     </div>
     <div id="badge-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Badge">
@@ -209,11 +214,14 @@
         // ---- Theme management ----
         function setTheme(dark) {
             document.documentElement.classList.toggle('dark', dark);
+            // Also keep the browser UI theme color in sync (PWA / mobile address bar)
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', dark ? '#0f172a' : '#f1f5f9'); // slate-900 vs slate-100
             try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(e){}
         }
         (function initTheme(){
             const saved = (() => { try { return localStorage.getItem('theme'); } catch(e){ return null; }})();
-            setTheme(saved ? saved === 'dark' : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            setTheme(saved ? saved === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches));
         })();
 
         const firebaseConfig = {
@@ -858,4 +866,4 @@
         });
     </script>
 </body>
-</ht
+</html>
