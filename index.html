@@ -45,7 +45,6 @@
           display: none; z-index: 100;
         }
 
-        /* NEW: Badge Ceremony Animations */
         .badge-ceremony-icon {
             animation: spin-and-glow 1.5s ease-in-out;
         }
@@ -177,6 +176,17 @@
     <div id="summary-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Daily Summary">
         <div id="summary-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center modal-enter"></div>
     </div>
+    <!-- NEW: Confirmation Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Confirmation">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center modal-enter">
+            <h2 id="confirm-modal-title" class="text-2xl font-bold mb-4">Are you sure?</h2>
+            <p id="confirm-modal-text" class="text-slate-500 dark:text-slate-400 mb-6">This action cannot be undone.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="confirm-modal-cancel-btn" class="bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-6 rounded-lg">Cancel</button>
+                <button id="confirm-modal-confirm-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg">Delete</button>
+            </div>
+        </div>
+    </div>
 
     <div id="message-box" class="hidden fixed bottom-5 right-5 p-4 text-sm rounded-lg shadow-lg z-50" role="alert"></div>
     <button id="installBtn" type="button">Install Karmyog</button>
@@ -260,7 +270,12 @@
             badgeModal: document.getElementById('badge-modal'),
             badgeModalContent: document.getElementById('badge-modal-content'),
             summaryModal: document.getElementById('summary-modal'),
-            summaryModalContent: document.getElementById('summary-modal-content')
+            summaryModalContent: document.getElementById('summary-modal-content'),
+            confirmModal: document.getElementById('confirm-modal'),
+            confirmModalTitle: document.getElementById('confirm-modal-title'),
+            confirmModalText: document.getElementById('confirm-modal-text'),
+            confirmModalCancelBtn: document.getElementById('confirm-modal-cancel-btn'),
+            confirmModalConfirmBtn: document.getElementById('confirm-modal-confirm-btn')
         };
 
         // --- Helpers ---
@@ -270,6 +285,7 @@
         let state = {};
         let unsubscribe;
         let pendingFinalDailyKarma = null;
+        let confirmAction = null;
 
         const defaultState = { totalKarma: 0, dailyKarma: 0, goals: [], unlockedBadges: [], dailyActions: [], customPrayashchits: [] };
         const badges = [
@@ -546,10 +562,12 @@
 
         function handleDeleteGoal(e) {
             const goalId = String(e.target.closest('.delete-goal-btn').dataset.goalId);
-            state.goals = state.goals.filter(g => String(g.id) !== goalId);
-            state.dailyActions = state.dailyActions.filter(t => String(t.goalId) !== goalId);
-            showMessage('Practice removed.', 'info');
-            saveState();
+            openConfirmModal('Delete Practice?', 'This will remove the practice and any of its tasks for today. This cannot be undone.', () => {
+                state.goals = state.goals.filter(g => String(g.id) !== goalId);
+                state.dailyActions = state.dailyActions.filter(t => String(t.goalId) !== goalId);
+                showMessage('Practice removed.', 'info');
+                saveState();
+            });
         }
 
         function endDay() {
@@ -718,29 +736,19 @@
         }
 
         function handleResetKarma() {
-            if (dom.resetKarmaBtn.dataset.confirm === 'true') {
+            openConfirmModal('Reset All Karma?', 'This will reset your Total Karma and all Practice Karma scores to zero. This cannot be undone.', () => {
                 state.totalKarma = 0;
                 state.goals.forEach(g => g.totalPracticeKarma = 0);
                 showMessage('Your accumulated Karma has been reset.', 'info');
                 saveState();
-                dom.resetKarmaBtn.textContent = 'Reset Accumulated Karma';
-                dom.resetKarmaBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-                dom.resetKarmaBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
-                delete dom.resetKarmaBtn.dataset.confirm;
-            } else {
-                dom.resetKarmaBtn.textContent = 'Confirm Reset?';
-                dom.resetKarmaBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
-                dom.resetKarmaBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-                dom.resetKarmaBtn.dataset.confirm = 'true';
-                setTimeout(() => {
-                    if (dom.resetKarmaBtn.dataset.confirm === 'true') {
-                        dom.resetKarmaBtn.textContent = 'Reset Accumulated Karma';
-                        dom.resetKarmaBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-                        dom.resetKarmaBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
-                        delete dom.resetKarmaBtn.dataset.confirm;
-                    }
-                }, 3000);
-            }
+            });
+        }
+
+        function openConfirmModal(title, text, onConfirm) {
+            dom.confirmModalTitle.textContent = title;
+            dom.confirmModalText.textContent = text;
+            dom.confirmModal.classList.remove('hidden');
+            confirmAction = onConfirm;
         }
 
         function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
@@ -808,6 +816,13 @@
             const finalDailyKarma = (pendingFinalDailyKarma !== null) ? pendingFinalDailyKarma : ((state.dailyKarma || 0) - state.dailyActions.filter(t => t.type === 'karma').length);
             closeModal('prayashchit-modal');
             finalizeDay(finalDailyKarma, choice);
+        });
+        dom.confirmModalCancelBtn.addEventListener('click', () => closeModal('confirm-modal'));
+        dom.confirmModalConfirmBtn.addEventListener('click', () => {
+            if (typeof confirmAction === 'function') {
+                confirmAction();
+            }
+            closeModal('confirm-modal');
         });
         document.addEventListener('click', e => { if (e.target.id === 'badge-modal') closeModal('badge-modal'); });
         dom.themeToggleBtn.addEventListener('click', () => setTheme(!document.documentElement.classList.contains('dark')));
