@@ -226,7 +226,7 @@
 
         const firebaseConfig = {
             apiKey: "AIzaSyA1YxzDZzzyIuAxjxzo_Vy3d8CLtHoBK44",
-            authDomain: "karmyog-6da5f.firebaseapp.com",
+            authDomain: "karmyog.life",
             projectId: "karmyog-6da5f",
             storageBucket: "karmyog-6da5f.appspot.com",
             messagingSenderId: "331203556277",
@@ -770,21 +770,21 @@
             }
         }
 
-        // --- Event Listeners ---
-        document.addEventListener('DOMContentLoaded', () => { dom.gitaQuoteEl.textContent = `"${gitaQuotes[new Date().getDate() % gitaQuotes.length]}"`; });
-        
-        dom.googleSigninBtn.addEventListener('click', () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch(error => {
-                if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-                    dom.googleRedirectFallback.classList.remove('hidden');
-                    showMessage('Pop-up was closed. Use the alternate link if needed.', 'error');
-                } else {
-                    showMessage(error.message, 'error');
-                }
-            });
-        });
-
+       dom.googleSigninBtn.addEventListener('click', () => {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(err => {
+    // Auto-fallback to redirect if the popup is blocked/closed or cancelled
+    if (
+      err.code === 'auth/popup-blocked' ||
+      err.code === 'auth/popup-closed-by-user' ||
+      err.code === 'auth/cancelled-popup-request'
+    ) {
+      auth.signInWithRedirect(provider);
+    } else {
+      showMessage(err.message, 'error');
+    }
+  });
+});
         dom.googleRedirectFallback.addEventListener('click', (e) => {
             e.preventDefault();
             const provider = new firebase.auth.GoogleAuthProvider();
@@ -867,4 +867,5 @@
     </script>
 </body>
 </html>
+
 
