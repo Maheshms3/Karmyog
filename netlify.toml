@@ -1,48 +1,11 @@
 # This file configures deployment settings for Netlify.
 
-# ---- Headers ----
-
-# Serve the manifest with the correct content type (PWA requirement)
 [[headers]]
   for = "/manifest.json"
   [headers.values]
     Content-Type = "application/manifest+json"
 
-# Keep the service worker from being cached too long (easier updates)
 [[headers]]
   for = "/service-worker.js"
   [headers.values]
     Cache-Control = "no-cache"
-
-# ---- Redirects ----
-
-# 1) Force the Netlify subdomain to the custom domain
-#    Any request to karmyoglife.netlify.app/* -> https://karmyog.life/:splat
-[[redirects]]
-from = "/*"
-to = "https://karmyog.life/:splat"
-status = 301
-force = true
-conditions = { Host = ["karmyoglife.netlify.app"] }
-
-# 2) Optional hardening: normalize www + HTTP to HTTPS apex
-#    www -> apex (HTTPS)
-[[redirects]]
-from = "https://www.karmyog.life/*"
-to = "https://karmyog.life/:splat"
-status = 301
-force = true
-
-#    http (apex) -> HTTPS apex
-[[redirects]]
-from = "http://karmyog.life/*"
-to = "https://karmyog.life/:splat"
-status = 301
-force = true
-
-#    http (www) -> HTTPS apex
-[[redirects]]
-from = "http://www.karmyog.life/*"
-to = "https://karmyog.life/:splat"
-status = 301
-force = true
