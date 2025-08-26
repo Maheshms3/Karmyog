@@ -1,8 +1,15 @@
+# --- Serve SEO files from /public at root paths ---
+/sitemap.xml    /public/sitemap.xml   200
+/robots.txt     /public/robots.txt    200
+
 # --- Firebase Auth helper proxy (same-site handler) ---
-/__/auth/*  https://karmyog-6da5f.firebaseapp.com/__/auth/:splat  200
+/__/auth/*      https://karmyog-6da5f.firebaseapp.com/__/auth/:splat  200
 
 # --- Domain normalization ---
 https://karmyoglife.netlify.app/*   https://karmyog.life/:splat   301!
 https://www.karmyog.life/*          https://karmyog.life/:splat   301!
 http://karmyog.life/*               https://karmyog.life/:splat   301!
 http://www.karmyog.life/*           https://karmyog.life/:splat   301!
+
+# --- SPA fallback (keep LAST so previous rules still work) ---
+/*               /index.html          200
