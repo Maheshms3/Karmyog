@@ -1,16 +1,20 @@
-/* Karmyog SW – SEO-friendly caching */
-const STATIC_CACHE = 'karmyog-static-v1';
-const ASSET_CACHE = 'karmyog-assets-v1';
+/* Karmyog SW – SEO-friendly caching + notifications + robust offline fallback */
 
-// Precache only small, stable essentials (avoid HTML shell here)
+const STATIC_CACHE = 'karmyog-static-v2';
+const ASSET_CACHE  = 'karmyog-assets-v2';
+
+// Precache only small, stable essentials (avoid HTML shell here by design)
 const PRECACHE = [
   '/manifest.json',
   '/icons/icon-192x192.png',
-  '/icons/icon-512.png'
+  // include both possible 512 icons to avoid path mismatches across commits
+  '/icons/icon-512.png',
+  '/icons/icon-512x512.png'
 ];
 
 // Utility to check same-origin
-const sameOrigin = (url) => new URL(url, self.location.origin).origin === self.location.origin;
+const sameOrigin = (url) =>
+  new URL(url, self.location.origin).origin === self.location.origin;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -49,13 +53,20 @@ self.addEventListener('fetch', (event) => {
   if (req.mode === 'navigate') {
     return event.respondWith(
       fetch(req)
-        .then((res) => {
-          // Optionally cache the page snapshot (not strictly needed)
+        .then(async (res) => {
+          // Store a snapshot of index.html for offline fallback (without precaching HTML)
+          try {
+            const clone = res.clone();
+            // Cache under a stable key so fallback always finds it
+            const cache = await caches.open(STATIC_CACHE);
+            // Prefer caching canonical index if path is root or any SPA route
+            await cache.put('/index.html', clone);
+          } catch (_) { /* ignore */ }
           return res;
         })
         .catch(async () => {
           // Fallback to cached index.html if available
-          const cache = await caches.open(STATIC_CACHE);
+          const cache  = await caches.open(STATIC_CACHE);
           const cached = await cache.match('/index.html');
           return cached || Response.error();
         })
@@ -64,17 +75,19 @@ self.addEventListener('fetch', (event) => {
 
   // For same-origin static assets (CSS/JS/images), do stale-while-revalidate
   if (sameOrigin(req.url)) {
-    // Don’t try to cache HTML documents here
-    const isHTML = req.headers.get('accept')?.includes('text/html');
-    if (isHTML) return; // handled above
+    // Don’t try to cache HTML documents here; handled by the navigate branch above
+    const accept = req.headers.get('accept') || '';
+    const isHTML = accept.includes('text/html');
+    if (isHTML) return; // let the navigate handler deal with it
 
     return event.respondWith(
       caches.open(ASSET_CACHE).then(async (cache) => {
         const cached = await cache.match(req);
+
         const networkFetch = fetch(req)
           .then((res) => {
             // Only cache successful, basic responses
-            if (res && res.status === 200 && res.type === 'basic') {
+            if (res && res.status === 200 && (res.type === 'basic' || res.type === 'cors')) {
               cache.put(req, res.clone());
             }
             return res;
@@ -87,6 +100,32 @@ self.addEventListener('fetch', (event) => {
     );
   }
 
-  // Cross-origin (e.g., CDNs) – just hit network
-  // (You could add specific caching for fonts/CDNs later if needed)
+  // Cross-origin (e.g., CDNs) – network by default
+  // (You can add explicit caching for fonts/CDNs later if desired)
+});
+
+// OPTIONAL: Push notifications (works only if the app enabled push & has a token)
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch(e){ data = {}; }
+
+  const title = data.title || 'Karmyog';
+  const options = {
+    body: data.body || '',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-192x192.png',
+    data: data.data || {}
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const c of list) { if ('focus' in c) return c.focus(); }
+      if (clients.openWindow) return clients.openWindow('/');
+    })
+  );
 });
