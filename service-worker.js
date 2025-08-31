@@ -1,16 +1,31 @@
 /* Karmyog SW – SEO-friendly caching + notifications + robust offline fallback */
+importScripts('https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.6.7/firebase-messaging-compat.js');
 
-const STATIC_CACHE = 'karmyog-static-v2';
-const ASSET_CACHE  = 'karmyog-assets-v2';
+const STATIC_CACHE = 'karmyog-static-v3';
+const ASSET_CACHE  = 'karmyog-assets-v3';
 
-// Precache only small, stable essentials (avoid HTML shell here by design)
+// Precache only small, stable essentials
 const PRECACHE = [
   '/manifest.json',
   '/icons/icon-192x192.png',
-  // include both possible 512 icons to avoid path mismatches across commits
   '/icons/icon-512.png',
   '/icons/icon-512x512.png'
 ];
+
+// Copy your firebaseConfig from index.html here
+const firebaseConfig = {
+    apiKey: "AIzaSyA1YxzDZzzyIuAxjxzo_Vy3d8CLtHoBK44",
+    authDomain: "karmyog.life",
+    projectId: "karmyog-6da5f",
+    storageBucket: "karmyog-6da5f.appspot.com",
+    messagingSenderId: "331203556277",
+    appId: "1:331203556277:web:b087b49debac40eeb6dffc",
+    measurementId: "G-316W8DPVBN"
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
 
 // Utility to check same-origin
 const sameOrigin = (url) =>
@@ -99,25 +114,19 @@ self.addEventListener('fetch', (event) => {
       })
     );
   }
-
-  // Cross-origin (e.g., CDNs) – network by default
-  // (You can add explicit caching for fonts/CDNs later if desired)
 });
 
-// OPTIONAL: Push notifications (works only if the app enabled push & has a token)
-self.addEventListener('push', (event) => {
-  let data = {};
-  try { data = event.data ? event.data.json() : {}; } catch(e){ data = {}; }
-
-  const title = data.title || 'Karmyog';
-  const options = {
-    body: data.body || '',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-192x192.png',
-    data: data.data || {}
+// Push notifications - now using the Firebase SDK
+messaging.onBackgroundMessage((payload) => {
+  console.log('Received background message ', payload);
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: payload.notification.icon || '/icons/icon-192x192.png',
+    badge: '/icons/icon-192x192.png'
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 self.addEventListener('notificationclick', (event) => {
