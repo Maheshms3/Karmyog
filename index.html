@@ -107,7 +107,7 @@
         <div id="sidebar-badge-container" class="grid grid-cols-4 gap-4 text-center"></div>
       </div>
 
-      <!-- NEW: Reminders & End Day Settings -->
+      <!-- Reminders & End Day Settings -->
       <div class="mt-8 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg">
         <h3 class="text-xl font-bold mb-3">Reminders</h3>
         <label class="flex items-center justify-between mb-2">
@@ -133,7 +133,6 @@
 
     <div class="mt-auto pt-6 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
       <button id="reset-karma-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors mb-4">Reset Accumulated Karma</button>
-      <!-- OLD BUTTON: kept but hidden so existing listeners don't crash -->
       <button id="reset-day-btn" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg">End Day &amp; Evaluate</button>
     </div>
   </div>
@@ -210,7 +209,7 @@
           <option value="vikarma">Vikarma (Negative Action)</option>
         </select>
 
-        <!-- NEW: Reminder & Deadline -->
+        <!-- Reminder & Deadline -->
         <div class="grid grid-cols-2 gap-3 mb-6">
           <div>
             <label class="block text-sm mb-1">Reminder Time</label>
@@ -309,7 +308,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     const storage = firebase.storage();
-    let messaging = null; // will be used only if push is enabled
+    let messaging = null; // used only if push is enabled
 
     // --- DOM ---
     const dom = {
@@ -357,7 +356,7 @@
       confirmModalText: document.getElementById('confirm-modal-text'),
       confirmModalCancelBtn: document.getElementById('confirm-modal-cancel-btn'),
       confirmModalConfirmBtn: document.getElementById('confirm-modal-confirm-btn'),
-      // NEW settings
+      // settings
       remindersToggle: document.getElementById('toggle-inapp-reminders'),
       pushToggle: document.getElementById('toggle-push-reminders'),
       endDayTimeInput: document.getElementById('endday-time'),
@@ -393,7 +392,6 @@
       unlockedBadges: [],
       dailyActions: [],
       customPrayashchits: [],
-      // NEW settings
       settings: {
         endDayTime: "22:30",
         autoFinalizeAfterMins: 30,
@@ -537,7 +535,7 @@
               <div><p class="font-semibold text-lg">${safeName}</p><p class="text-xs text-slate-400">${safeGoalName}</p>${timing}</div>
             </div>
             <div class="flex items-center"><span class="font-bold text-green-500 mx-2">+1</span>${deleteBtnHTML}</div></div>`;
-        } else { // Vikarma
+        } else {
           li.classList.add('vikarma-card');
           li.innerHTML = `<div class="flex items-center justify-between">
             <div class="flex items-center">
@@ -681,12 +679,10 @@
       const task = state.dailyActions.find(t => String(t.id) === taskId);
       if (!task) return;
 
-      // small guard: discourage deleting negative logs
       if (task.type === 'vikarma') {
         showMessage('Negative actions should be logged, not deleted.', 'error');
         return;
       }
-      // optional: count deleting a positive as a miss (soft nudge)
       if (task.type === 'karma') { state.dailyKarma = (state.dailyKarma || 0) - 1; }
 
       state.dailyActions = state.dailyActions.filter(t => String(t.id) !== taskId);
@@ -746,7 +742,7 @@
       saveState();
     }
 
-    // Drag/reorder (unchanged)
+    // Drag/reorder
     let draggedItem = null;
     dom.taskList.addEventListener('dragstart', e => {
       if (e.target.classList.contains('karma-item')) {
@@ -891,7 +887,7 @@
       else { dom.sidebar.classList.add('-translate-x-full'); dom.sidebarOverlay.classList.add('hidden'); }
     }
 
-    // --- NEW: Settings UI init/bind ---
+    // --- Settings UI init/bind ---
     function initSettingsUI(){
       const s = state.settings || defaultState.settings;
       dom.remindersToggle.checked = !!s.remindersEnabled;
@@ -923,7 +919,7 @@
     }
     bindSettingsEvents();
 
-    // --- NEW: Foreground Reminder Scheduler ---
+    // --- Foreground Reminder Scheduler ---
     let schedulerTimer = null;
     let alreadyReminded = new Set();
     function scheduleForegroundReminders(){
@@ -997,7 +993,7 @@
       }catch(e){}
     }
 
-    // --- NEW: Resume safety net (finalize missed day) ---
+    // --- Resume safety net (finalize missed day) ---
     function maybeFinalizeMissedDay(){
       const todayISO = new Date().toISOString().slice(0,10);
       if (state.lastFinalizedDate !== todayISO){
@@ -1010,20 +1006,23 @@
       }
     }
 
-    // --- NEW: Push (optional) ---
+    // --- Push (optional) ---
     async function ensurePushPermission(){
       try{
         if (!('Notification' in window)) { showMessage('Notifications not supported on this device.', 'error'); return false; }
         const perm = await Notification.requestPermission();
         if (perm !== 'granted') { showMessage('Notifications permission denied.', 'error'); return false; }
         if (!messaging) messaging = firebase.messaging();
-        // TODO: replace with your Web Push certificate key (Firebase console > Project Settings > Cloud Messaging)
-        const token = await messaging.getToken({ vapidKey: 'BCoF7_yJ4AcT_dyf98XjeZ8H8X3IxRmynPLGddqOsj6TcSO5Xni5Bx7nYS1FOZDzG1f03VPJ6JUXUqZ2yd_GpFs' });
+        const reg = await navigator.serviceWorker.ready;
+        const token = await messaging.getToken({
+          vapidKey: 'BCoF7_yJ4AcT_dyf98XjeZ8H8X3IxRmynPLGddqOsj6TcSO5Xni5Bx7nYS1FOZDzG1f03VPJ6JUXUqZ2yd_GpFs',
+          serviceWorkerRegistration: reg
+        });
         const uid = auth.currentUser?.uid;
         if (uid && token) await db.collection('users').doc(uid).set({ fcmToken: token }, { merge: true });
         showMessage('Push reminders enabled.', 'success');
         return true;
-      }catch(e){ showMessage(e.message || 'Push set-up failed.', 'error'); return false; }
+      }catch(e){ console.error(e); showMessage(e.message || 'Push set-up failed.', 'error'); return false; }
     }
 
     // --- Diary / Notes ---
@@ -1037,6 +1036,9 @@
           const list = [];
           snap.forEach(d => list.push({ id:d.id, ...d.data() }));
           renderNotes(list);
+        }, (err) => {
+          console.error('notes listener error:', err);
+          showMessage('Cannot load notes: ' + (err.message || err), 'error');
         });
     }
     function renderNotes(list){
@@ -1057,56 +1059,125 @@
       });
     }
     async function saveNote({title, body, audioBlob}){
-      const uid = auth.currentUser?.uid; if (!uid) return;
-      let audioUrl = null;
-      if (audioBlob){
-        const path = `notes/${uid}/${Date.now()}.webm`;
-        const ref = storage.ref().child(path);
-        await ref.put(audioBlob);
-        audioUrl = await ref.getDownloadURL();
+      const uid = auth.currentUser?.uid; if (!uid) { showMessage('Not signed in.', 'error'); return; }
+      try {
+        let audioUrl = null;
+        if (audioBlob){
+          const mime = audioBlob.type || 'audio/webm';
+          const ext =
+            mime.includes('mp4') ? 'm4a' :
+            mime.includes('mpeg') ? 'mp3' :
+            'webm';
+
+          const path = `notes/${uid}/${Date.now()}.${ext}`;
+          const ref = storage.ref().child(path);
+          await ref.put(audioBlob, { contentType: mime });
+          audioUrl = await ref.getDownloadURL();
+        }
+
+        await db.collection('users').doc(uid).collection('notes').add({
+          title: title || '',
+          body: body || '',
+          audioUrl,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showMessage('Note saved.', 'success');
+      } catch (e) {
+        console.error('saveNote error:', e);
+        showMessage('Failed to save note: ' + (e.message || e), 'error');
       }
-      await db.collection('users').doc(uid).collection('notes').add({
-        title: title || '',
-        body: body || '',
-        audioUrl,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      showMessage('Note saved.', 'success');
     }
 
-    // Dictation
+    // Dictation (start/stop)
+    let _sr = null;
     dom.btnDictate.onclick = () => {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { showMessage('Speech recognition not supported. Use Record instead.', 'error'); return; }
-      const r = new SR();
-      r.continuous = true; r.interimResults = true; r.lang = 'en-IN';
-      r.onresult = (ev) => {
-        let txt = '';
-        for (let i = ev.resultIndex; i < ev.results.length; i++){ txt += ev.results[i][0].transcript; }
-        dom.noteBody.value = txt;
-      };
-      r.onend = ()=> showMessage('Dictation ended.', 'info');
-      r.onerror = ()=> showMessage('Speech error.', 'error');
-      r.start();
-      showMessage('Dictating... speak now.', 'info');
+      if (!_sr) {
+        if (!SR) { showMessage('Speech recognition not supported. Use Record instead.', 'error'); return; }
+        _sr = new SR();
+        _sr.continuous = true;
+        _sr.interimResults = true;
+        _sr.lang = 'en-IN';
+        _sr.onresult = (ev) => {
+          let txt = '';
+          for (let i = ev.resultIndex; i < ev.results.length; i++){ txt += ev.results[i][0].transcript; }
+          dom.noteBody.value = txt;
+        };
+        _sr.onend = () => { showMessage('Dictation ended.', 'info'); _sr = null; };
+        _sr.onerror = (e) => { console.error('speech error', e); showMessage('Speech error.', 'error'); _sr = null; };
+        _sr.start();
+        showMessage('Dictating... tap again to stop.', 'info');
+      } else {
+        try { _sr.stop(); } catch(_) {}
+      }
     };
 
-    // Recording
+    // Recording (cross-browser)
     let rec, chunks = [];
+    let currentMime = '';
+    let currentExt = '';
+    function pickSupportedMime(){
+      const candidates = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/mpeg'
+      ];
+      for (const m of candidates) {
+        if (window.MediaRecorder && typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(m)) {
+          return m;
+        }
+      }
+      return '';
+    }
+
     dom.btnRecord.onclick = async () => {
-      if (rec && rec.state === 'recording') { rec.stop(); return; }
-      try{
+      if (rec && rec.state === 'recording') {
+        try { rec.stop(); } catch(_) {}
+        return;
+      }
+      if (!window.MediaRecorder) {
+        showMessage('Recording not supported on this browser. Use Dictate or type.', 'error');
+        return;
+      }
+      try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        rec = new MediaRecorder(stream);
         chunks = [];
-        rec.ondataavailable = e => { if (e.data.size>0) chunks.push(e.data); };
+
+        currentMime = pickSupportedMime();
+        currentExt =
+          currentMime.includes('mp4') ? 'm4a' :
+          currentMime.includes('mpeg') ? 'mp3' :
+          'webm';
+
+        rec = currentMime ? new MediaRecorder(stream, { mimeType: currentMime }) : new MediaRecorder(stream);
+
+        rec.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
         rec.onstop = async () => {
-          const blob = new Blob(chunks, { type: 'audio/webm' });
-          await saveNote({ title: dom.noteTitle.value.trim(), body: dom.noteBody.value.trim(), audioBlob: blob });
+          try {
+            const type = currentMime || 'audio/webm';
+            const blob = new Blob(chunks, { type });
+            await saveNote({
+              title: dom.noteTitle.value.trim(),
+              body: dom.noteBody.value.trim(),
+              audioBlob: blob
+            });
+          } catch (e) {
+            console.error('onstop save error:', e);
+            showMessage('Could not save recording: ' + (e.message || e), 'error');
+          } finally {
+            stream.getTracks().forEach(t => t.stop());
+          }
         };
+
         rec.start();
-        showMessage('Recording... click again to stop', 'info');
-      }catch(e){ showMessage('Mic permission denied.', 'error'); }
+        showMessage(`Recording... tap again to stop (${currentExt || 'audio'})`, 'info');
+      } catch (e) {
+        console.error('getUserMedia error:', e);
+        showMessage('Mic permission denied or unavailable.', 'error');
+      }
     };
 
     dom.btnSaveNote.onclick = () => saveNote({ title: dom.noteTitle.value.trim(), body: dom.noteBody.value.trim() });
@@ -1214,4 +1285,3 @@
   </script>
 </body>
 </html>
-
