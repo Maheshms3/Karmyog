@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${FIREBASE_API_KEY:?Missing FIREBASE_API_KEY}"
+: "${FIREBASE_AUTH_DOMAIN:?Missing FIREBASE_AUTH_DOMAIN}"
+: "${FIREBASE_PROJECT_ID:?Missing FIREBASE_PROJECT_ID}"
+: "${FIREBASE_STORAGE_BUCKET:?Missing FIREBASE_STORAGE_BUCKET}"
+: "${FIREBASE_MESSAGING_SENDER_ID:?Missing FIREBASE_MESSAGING_SENDER_ID}"
+: "${FIREBASE_APP_ID:?Missing FIREBASE_APP_ID}"
+: "${FIREBASE_MEASUREMENT_ID:?Missing FIREBASE_MEASUREMENT_ID}"
+
+escape() { printf '%s' "$1" | sed -e 's/[&\]/\\&/g'; }
+
+API_KEY=$(escape "$FIREBASE_API_KEY")
+AUTH_DOMAIN=$(escape "$FIREBASE_AUTH_DOMAIN")
+PROJECT_ID=$(escape "$FIREBASE_PROJECT_ID")
+STORAGE_BUCKET=$(escape "$FIREBASE_STORAGE_BUCKET")
+MSG_SENDER_ID=$(escape "$FIREBASE_MESSAGING_SENDER_ID")
+APP_ID=$(escape "$FIREBASE_APP_ID")
+MEASUREMENT_ID=$(escape "$FIREBASE_MEASUREMENT_ID")
+
+TARGET="index.html"
+if [ ! -f "$TARGET" ]; then
+  echo "ERROR: $TARGET not found at $(pwd)"
+  exit 1
+fi
+
+sed -i \
+  -e "s|%%FIREBASE_API_KEY%%|$API_KEY|g" \
+  -e "s|%%FIREBASE_AUTH_DOMAIN%%|$AUTH_DOMAIN|g" \
+  -e "s|%%FIREBASE_PROJECT_ID%%|$PROJECT_ID|g" \
+  -e "s|%%FIREBASE_STORAGE_BUCKET%%|$STORAGE_BUCKET|g" \
+  -e "s|%%FIREBASE_MESSAGING_SENDER_ID%%|$MSG_SENDER_ID|g" \
+  -e "s|%%FIREBASE_APP_ID%%|$APP_ID|g" \
+  -e "s|%%FIREBASE_MEASUREMENT_ID%%|$MEASUREMENT_ID|g" \
+  "$TARGET"
+
+echo "✅ Firebase placeholders injected into $TARGET"
