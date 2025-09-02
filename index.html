@@ -167,6 +167,7 @@
         <h2 class="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Today's Actions</h2>
         <ul id="task-list" class="space-y-4"></ul>
         <button id="add-karma-btn" class="w-full mt-6 bg-indigo-200 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-300 dark:hover:bg-indigo-900 font-semibold py-3 rounded-lg text-sm">+ Add New Action</button>
+        <button id="quick-log-vikarma-btn" class="w-full mt-2 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900 font-semibold py-3 rounded-lg text-sm">Log Vikarma Now</button>
       </div>
     </div>
 
@@ -280,6 +281,11 @@
         .replace(/&/g,"&amp;").replace(/</g,"&lt;")
         .replace(/>/g,"&gt;").replace(/"/g,"&quot;")
         .replace(/'/g,"&#39;");
+    }
+    // ---- Local date helper (YYYY-MM-DD in user TZ) ----
+    function localDateISO(d = new Date()) {
+      // en-CA gives YYYY-MM-DD in most browsers
+      return d.toLocaleDateString('en-CA');
     }
 
     // ---- Theme ----
@@ -398,7 +404,8 @@
         remindersEnabled: true,
         pushRemindersEnabled: false
       },
-      lastFinalizedDate: null
+      lastFinalizedDate: null,
+      metrics: { completedPositiveToday: 0, loggedNegativeToday: 0 } // NEW
     };
 
     const badges = [
@@ -453,6 +460,8 @@
         if (!state.goals) state.goals = [];
         if (!state.customPrayashchits) state.customPrayashchits = [];
         if (!state.settings) state.settings = JSON.parse(JSON.stringify(defaultState.settings));
+        if (!state.metrics) state.metrics = { completedPositiveToday: 0, loggedNegativeToday: 0 }; // ensure metrics exist
+
         state.goals.forEach(g => {
           if (g.totalPracticeKarma === undefined) g.totalPracticeKarma = 0;
           if (g.completedOneToday === undefined) g.completedOneToday = false;
@@ -462,6 +471,7 @@
         renderAll();
         maybeFinalizeMissedDay();
         scheduleForegroundReminders();
+        maybeShowQueuedSummary(); // show any queued summary immediately
       });
     }
 
@@ -527,7 +537,7 @@
 
         if (task.type === 'prayashchit') {
           li.classList.add('prayashchit-card');
-          li.innerHTML = `<div class="flex items-center"><i class="fas fa-person-praying text-amber-500 mr-4" aria-hidden="true"></i><div><p class="font-semibold text-lg">${safeName}</p><p class="text-xs text-slate-400">Prayashchit (from yesterday)</p></div></div>`;
+          li.innerHTML = `<div class="flex items-center"><i class="fas fa-person-praying text-amber-500 mr-4" aria-hidden="true"></i><div><p class="font-semibold text-lg">${safeName}</p><p class="text-xs text-slate-400">Prayashchit (from yesterday)</p>${timing}</div></div>`;
         } else if (task.type === 'karma') {
           li.innerHTML = `<div class="flex items-center justify-between">
             <div class="flex items-center">
@@ -573,7 +583,7 @@
       });
     }
 
-    // --- Core Logic (existing) + small hooks ---
+    // --- Core Logic + hooks ---
     function addGoal() {
       const name = dom.goalNameInput.value.trim();
       if (!name) { showMessage("Practice name cannot be empty.", "error"); return; }
@@ -642,6 +652,7 @@
       const goal = state.goals.find(g => String(g.id) === String(task.goalId));
 
       state.dailyKarma = (state.dailyKarma || 0) + 1;
+      state.metrics.completedPositiveToday = (state.metrics.completedPositiveToday || 0) + 1; // NEW
       if (goal) { goal.totalPracticeKarma = (goal.totalPracticeKarma || 0) + 1; goal.completedOneToday = true; }
 
       state.dailyActions.splice(taskIndex, 1);
@@ -663,6 +674,7 @@
       const goal = state.goals.find(g => String(g.id) === String(task.goalId));
 
       state.dailyKarma = (state.dailyKarma || 0) - 1;
+      state.metrics.loggedNegativeToday = (state.metrics.loggedNegativeToday || 0) + 1; // NEW
       if (goal) goal.totalPracticeKarma = (goal.totalPracticeKarma || 0) - 1;
 
       state.dailyActions.splice(taskIndex, 1);
@@ -683,8 +695,7 @@
         showMessage('Negative actions should be logged, not deleted.', 'error');
         return;
       }
-      if (task.type === 'karma') { state.dailyKarma = (state.dailyKarma || 0) - 1; }
-
+      // FIX: Do not decrement dailyKarma when deleting a positive task.
       state.dailyActions = state.dailyActions.filter(t => String(t.id) !== taskId);
       showMessage('Action removed.', 'info');
       saveState();
@@ -700,7 +711,7 @@
       });
     }
 
-    // Existing end-of-day flow (kept) — now triggered automatically
+    // Existing end-of-day flow
     function endDay() {
       let finalDailyKarma = state.dailyKarma || 0;
       const missedKarmas = state.dailyActions.filter(t => t.type === 'karma');
@@ -722,6 +733,7 @@
       });
 
       pendingFinalDailyKarma = finalDailyKarma;
+      // Summary will read metrics directly for breakdown
       showSummaryModal(finalDailyKarma, missedKarmas.length);
     }
 
@@ -729,6 +741,7 @@
       state.totalKarma = (state.totalKarma || 0) + finalDailyKarma;
       state.dailyKarma = 0;
       state.dailyActions = [];
+      state.metrics = { completedPositiveToday: 0, loggedNegativeToday: 0 }; // reset metrics
 
       state.goals.forEach(g => { g.hadTasksToday = false; g.completedOneToday = false; });
 
@@ -737,8 +750,8 @@
       }
       pendingFinalDailyKarma = null;
 
-      // mark finalized
-      state.lastFinalizedDate = new Date().toISOString().slice(0,10);
+      // mark finalized with LOCAL date
+      state.lastFinalizedDate = localDateISO();
       saveState();
     }
 
@@ -826,24 +839,95 @@
       dom.badgeModal.classList.remove('hidden');
     }
 
-    function showSummaryModal(finalDailyKarma, missedCount) {
+    // ---- Summary (with breakdown) + flexible flow ----
+    function showSummaryModal(finalDailyKarma, missedCount, opts = {}) {
+      const title = opts.title || 'Day Complete';
+      const earned = (opts.earned != null) ? opts.earned : (state.metrics?.completedPositiveToday || 0);
+      const negatives = (opts.negatives != null) ? opts.negatives : (state.metrics?.loggedNegativeToday || 0);
+      const planned = earned + (missedCount || 0);
+
       dom.summaryModalContent.innerHTML = `
-        <h2 class="text-3xl font-bold">Day Complete</h2>
-        <p class="text-xl mt-4">Today's Final Karma: <span class="${finalDailyKarma >= 0 ? 'karma-positive' : 'karma-negative'}">${finalDailyKarma > 0 ? '+' : ''}${finalDailyKarma}</span></p>
-        ${missedCount > 0 ? `<p class="text-sm text-slate-400 mt-2">(${missedCount} task(s) were missed)</p>` : '<p class="text-sm text-slate-400 mt-2">All tasks were addressed. Well done.</p>'}
+        <h2 class="text-3xl font-bold">${esc(title)}</h2>
+
+        <div class="mt-4 text-left bg-slate-100 dark:bg-slate-700 rounded-lg p-4">
+          <div class="flex justify-between"><span>Planned (positive)</span><span class="font-semibold">${planned}</span></div>
+          <div class="flex justify-between mt-1"><span>Earned (done)</span><span class="font-semibold karma-positive">+${earned}</span></div>
+          <div class="flex justify-between mt-1"><span>Missed (penalty)</span><span class="font-semibold karma-negative">-${missedCount || 0}</span></div>
+          <div class="flex justify-between mt-1"><span>Negatives logged</span><span class="font-semibold karma-negative">-${negatives}</span></div>
+          <hr class="my-3 border-slate-300 dark:border-slate-600">
+          <div class="flex justify-between text-lg">
+            <span>Final Karma</span>
+            <span class="font-bold ${finalDailyKarma >= 0 ? 'karma-positive' : 'karma-negative'}">${finalDailyKarma > 0 ? '+' : ''}${finalDailyKarma}</span>
+          </div>
+        </div>
+
         <button id="close-summary-btn" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg">Continue</button>`;
       dom.summaryModal.classList.remove('hidden');
 
       document.getElementById('close-summary-btn').onclick = () => {
         dom.summaryModal.classList.add('hidden');
+        if (typeof opts.onContinue === 'function') {
+          opts.onContinue();
+          return;
+        }
+        // Default: show prayashchit if negative, else finalize now
         if (finalDailyKarma < 0) {
           renderPrayashchitOptions();
           dom.prayashchitModal.classList.remove('hidden');
+          setPrayashchitHandler(() => {
+            const selected = document.querySelector('input[name="prayashchit"]:checked');
+            const choice = selected ? selected.value : null;
+            closeModal('prayashchit-modal');
+            finalizeDay(finalDailyKarma, choice);
+          });
         } else {
           finalizeDay(finalDailyKarma);
         }
       };
     }
+
+    function showSummaryOnlyQueued(ps) {
+      showSummaryModal(ps.finalDailyKarma, ps.missedCount, {
+        title: `Yesterday Complete (${ps.dateISO})`,
+        earned: ps.earned || 0,
+        negatives: ps.negatives || 0,
+        onContinue: () => {
+          // After acknowledging yesterday, ask for Prayashchit if needed (add to *today*)
+          if (state.pendingPrayashchit) {
+            renderPrayashchitOptions();
+            dom.prayashchitModal.classList.remove('hidden');
+            setPrayashchitHandler(() => {
+              const selected = document.querySelector('input[name="prayashchit"]:checked');
+              const choice = selected ? selected.value : null;
+              closeModal('prayashchit-modal');
+              if (choice) {
+                state.dailyActions.push({ id: makeId(), name: choice, type: 'prayashchit', goalId: null, order: 0 });
+              }
+              delete state.pendingPrayashchit;
+              saveState();
+            });
+          }
+        }
+      });
+    }
+
+    // --- Queued Summary state ---
+    function queueSummary({ finalDailyKarma, missedCount, dateISO, earned = 0, negatives = 0 }) {
+      state.pendingSummary = { finalDailyKarma, missedCount, dateISO, earned, negatives };
+      state.pendingPrayashchit = finalDailyKarma < 0;
+      saveState();
+    }
+
+    function maybeShowQueuedSummary() {
+      const ps = state.pendingSummary;
+      if (!ps) return;
+      // Show once, then clear
+      delete state.pendingSummary;
+      saveState();
+      showSummaryOnlyQueued(ps);
+    }
+
+    // Drag helpers etc already defined above...
 
     function renderPrayashchitOptions() {
       const allOptions = [...prayashchitList, ...(state.customPrayashchits || [])];
@@ -882,9 +966,16 @@
     }
 
     function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
+
     function toggleSidebar(show) {
       if (show) { dom.sidebar.classList.remove('-translate-x-full'); dom.sidebarOverlay.classList.remove('hidden'); }
       else { dom.sidebar.classList.add('-translate-x-full'); dom.sidebarOverlay.classList.add('hidden'); }
+    }
+
+    // ----- Prayashchit handler manager (avoid double handlers) -----
+    function setPrayashchitHandler(fn){
+      dom.acceptPrayashchitBtn.onclick = null;
+      dom.acceptPrayashchitBtn.onclick = fn;
     }
 
     // --- Settings UI init/bind ---
@@ -968,16 +1059,29 @@
         }
 
         // auto finalize if overdue and not done yet
-        const todayISO = new Date().toISOString().slice(0,10);
-        if (state.lastFinalizedDate !== todayISO && state._autoFinalizeAt && now >= state._autoFinalizeAt){
+        const todayLocal = localDateISO();
+        if (state.lastFinalizedDate !== todayLocal && state._autoFinalizeAt && now >= state._autoFinalizeAt){
           const missedKarmas = state.dailyActions.filter(t => t.type === 'karma');
           let finalDailyKarma = (state.dailyKarma || 0) - missedKarmas.length;
+
+          // queue a summary for "today" (being finalized now)
+          queueSummary({
+            finalDailyKarma,
+            missedCount: missedKarmas.length,
+            dateISO: todayLocal,
+            earned: state.metrics?.completedPositiveToday || 0,
+            negatives: state.metrics?.loggedNegativeToday || 0
+          });
+
           finalizeDay(finalDailyKarma);
-          state.lastFinalizedDate = todayISO;
+          state.lastFinalizedDate = todayLocal;
           delete state._autoFinalizeAt;
           saveState();
           showMessage('Day auto-finalized.', 'success');
           maybeNotify('Day finalized', `Final karma: ${finalDailyKarma >= 0 ? '+' : ''}${finalDailyKarma}`);
+
+          // surface it right away if app is open
+          maybeShowQueuedSummary();
         }
       }
     }
@@ -995,14 +1099,30 @@
 
     // --- Resume safety net (finalize missed day) ---
     function maybeFinalizeMissedDay(){
-      const todayISO = new Date().toISOString().slice(0,10);
-      if (state.lastFinalizedDate !== todayISO){
+      const todayLocal = localDateISO();
+      if (state.lastFinalizedDate !== todayLocal){
         const missedKarmas = state.dailyActions.filter(t => t.type === 'karma');
         let finalDailyKarma = (state.dailyKarma || 0) - missedKarmas.length;
+
+        // infer "yesterday" as last finalized or yesterday date
+        const y = state.lastFinalizedDate || localDateISO(new Date(Date.now() - 86400000));
+
+        // queue yesterday’s summary BEFORE we wipe lists
+        queueSummary({
+          finalDailyKarma,
+          missedCount: missedKarmas.length,
+          dateISO: y,
+          earned: state.metrics?.completedPositiveToday || 0,
+          negatives: state.metrics?.loggedNegativeToday || 0
+        });
+
         finalizeDay(finalDailyKarma);
-        state.lastFinalizedDate = todayISO;
+        state.lastFinalizedDate = todayLocal;
         saveState();
         showMessage('Finalized previous day on resume.', 'info');
+
+        // show the queued summary immediately
+        maybeShowQueuedSummary();
       }
     }
 
@@ -1199,6 +1319,46 @@
       _gitaShown = true;
     }
 
+    // --- Quick Ad-hoc Vikarma ---
+    function quickLogVikarma() {
+      const name = (prompt('What happened? (optional description)') || '').trim();
+
+      // Optional: attribute to a practice by number
+      let goalId = null;
+      if (state.goals && state.goals.length) {
+        const options = state.goals.map((g, i) => `${i+1}. ${g.name}`).join('\n');
+        const pick = prompt(`Attribute to a practice? Enter number or leave blank:\n${options}`);
+        const idx = parseInt(pick, 10);
+        if (!isNaN(idx) && idx >= 1 && idx <= state.goals.length) {
+          goalId = String(state.goals[idx - 1].id);
+        }
+      }
+
+      // Apply effects
+      state.dailyKarma = (state.dailyKarma || 0) - 1;
+      state.metrics = state.metrics || { completedPositiveToday: 0, loggedNegativeToday: 0 };
+      state.metrics.loggedNegativeToday = (state.metrics.loggedNegativeToday || 0) + 1;
+
+      if (goalId) {
+        const goal = state.goals.find(g => String(g.id) === goalId);
+        if (goal) goal.totalPracticeKarma = (goal.totalPracticeKarma || 0) - 1;
+      }
+
+      // Optional visible record
+      if (name) {
+        state.dailyActions.push({
+          id: makeId(),
+          name: `Vikarma: ${name}`,
+          type: 'vikarma',
+          goalId,
+          order: state.dailyActions.length
+        });
+      }
+
+      showMessage('Vikarma logged.', 'info');
+      saveState();
+    }
+
     // Events
     dom.googleSigninBtn.addEventListener('click', () => {
       const provider = new firebase.auth.GoogleAuthProvider();
@@ -1237,13 +1397,11 @@
       if (badgeEl.classList.contains('unlocked')) { showBadgeUnlockModal(badge); } else { showBadgeInfoModal(badge); }
     });
     dom.addCustomPrayashchitBtn.addEventListener('click', addCustomPrayashchit);
-    dom.acceptPrayashchitBtn.addEventListener('click', () => {
-      const selected = document.querySelector('input[name="prayashchit"]:checked');
-      const choice = selected ? selected.value : null;
-      const finalDailyKarma = (pendingFinalDailyKarma !== null) ? pendingFinalDailyKarma : ((state.dailyKarma || 0) - state.dailyActions.filter(t => t.type === 'karma').length);
-      closeModal('prayashchit-modal');
-      finalizeDay(finalDailyKarma, choice);
-    });
+
+    // NOTE: We do NOT keep a global acceptPrayashchit handler anymore; we set it per-flow via setPrayashchitHandler(...)
+
+    document.getElementById('quick-log-vikarma-btn').addEventListener('click', quickLogVikarma);
+
     dom.confirmModalCancelBtn.addEventListener('click', () => closeModal('confirm-modal'));
     dom.confirmModalConfirmBtn.addEventListener('click', () => {
       if (typeof confirmAction === 'function') { confirmAction(); }
@@ -1254,34 +1412,67 @@
 
   </script>
 
-  <!-- PWA Service Worker and Install Prompt -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-          .then(reg => console.log('ServiceWorker registration successful.'))
-          .catch(err => console.log('ServiceWorker registration failed: ', err));
-      });
-    }
-    let deferredPrompt;
-    const installBtn = document.getElementById('installBtn');
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      installBtn.style.display = 'inline-block';
-    });
-    installBtn.addEventListener('click', async () => {
-      installBtn.style.display = 'none';
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        await deferredPrompt.userChoice;
-        deferredPrompt = null;
+ <!-- PWA Service Worker and Install Prompt -->
+<script>
+  const SW_PATH = './service-worker.js'; // adjust if you renamed it
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+      try {
+        const reg = await navigator.serviceWorker.register(SW_PATH);
+        console.log('SW registered:', reg);
+
+        // If there's an updated worker waiting, activate it immediately.
+        if (reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+
+        // When a new worker is found, ask it to skip waiting as soon as it's installed.
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              nw.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+
+        // When the controller changes (new SW takes control), reload to get fresh assets.
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          // avoid infinite loop: reload once
+          if (!window.__reloadedForSW) {
+            window.__reloadedForSW = true;
+            window.location.reload();
+          }
+        });
+      } catch (err) {
+        console.log('ServiceWorker registration failed: ', err);
       }
     });
-    window.addEventListener('appinstalled', () => {
-      installBtn.style.display = 'none';
+  }
+
+  // Install prompt handling
+  let deferredPrompt;
+  const installBtn = document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+  });
+  installBtn.addEventListener('click', async () => {
+    installBtn.style.display = 'none';
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
       deferredPrompt = null;
-    });
-  </script>
+    }
+  });
+  window.addEventListener('appinstalled', () => {
+    installBtn.style.display = 'none';
+    deferredPrompt = null;
+  });
+</script>
+
 </body>
 </html>
