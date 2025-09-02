@@ -35,12 +35,54 @@
     #installBtn{position:fixed;right:1rem;bottom:4.5rem;padding:.7rem 1rem;border:0;border-radius:.6rem;font:600 14px/1.2 system-ui,sans-serif;background:#4f46e5;color:#fff;cursor:pointer;display:none;z-index:100}
     .badge-ceremony-icon{animation:spin-and-glow 1.5s ease-in-out}@keyframes spin-and-glow{0%{transform:scale(.5) rotate(0);filter:drop-shadow(0 0 0 white)}50%{transform:scale(1.2) rotate(360deg);filter:drop-shadow(0 0 15px white)}100%{transform:scale(1) rotate(360deg);filter:drop-shadow(0 0 5px white)}}
     .with-bottom-nav{padding-bottom:0}
-    /* Floating pen (Daily Notes) */
-    #fab-notes{position:fixed;right:1rem;bottom:1rem;z-index:60}
-    /* Notes modal (full screen editor) */
-    #notes-modal .editor-wrap{background:#fffbeb}
-    #notes-modal .editor{min-height:45vh;outline:none;white-space:pre-wrap}
-    #notes-modal .toolbar button{padding:.5rem .65rem;border-radius:.5rem}
+
+    /* ===================== Daily Journal UI ===================== */
+    /* Draggable Minimal Pen */
+    #pen-fab{
+      position:fixed; z-index:60; width:44px; height:44px; border-radius:9999px;
+      display:grid; place-items:center; cursor:grab;
+      /* glassy + transparent */
+      background:rgba(255,255,255,.6);
+      border:1px solid rgba(0,0,0,.12);
+      box-shadow:0 6px 20px rgba(0,0,0,.15);
+      backdrop-filter:saturate(120%) blur(6px);
+      /* default position if no saved pos */
+      right:16px; bottom:16px;
+    }
+    .dark #pen-fab{ background:rgba(2,6,23,.4); border-color:rgba(255,255,255,.12); color:#fff; }
+    #pen-fab:active{ cursor:grabbing; }
+
+    /* Journal page */
+    #journal{ position:fixed; inset:0; z-index:70; display:none; }
+    #journal.show{ display:block; }
+    #journal .sheet{
+      position:absolute; inset:0;
+      background:#fff; color:#0f172a;
+    }
+    .dark #journal .sheet{ background:#fff; color:#0f172a; } /* always white page per request */
+
+    #journal header{
+      height:52px; display:flex; align-items:center; gap:.5rem;
+      padding:0 .75rem; border-bottom:1px solid #e5e7eb;
+    }
+    #journal .date-badge{
+      margin-left:auto; display:flex; align-items:center; gap:.5rem;
+      font-weight:600;
+    }
+    #journal .date-badge input[type="date"]{
+      opacity:0; position:absolute; inset:0; width:100%; height:100%; cursor:pointer;
+    }
+    #journal main{ display:grid; grid-template-columns:1fr 280px; height:calc(100dvh - 52px); }
+    #journal textarea{
+      width:100%; height:100%; padding:18px;
+      border:0; outline:0; font-size:16px; line-height:1.6; resize:none;
+      background:#fff; color:#0f172a;
+    }
+    #journal aside{ border-left:1px solid #e5e7eb; overflow:auto; }
+    #journal aside .head{ position:sticky; top:0; background:#fff; border-bottom:1px solid #e5e7eb; padding:10px 12px; font-weight:700; }
+    #journal .note-item{ width:100%; text-align:left; padding:10px 12px; border:0; background:transparent; border-bottom:1px solid #f2f2f2; cursor:pointer;}
+    #journal .note-item .date{ font-size:12px; opacity:.7; }
+    #journal .note-item .preview{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
@@ -152,10 +194,37 @@
     </div>
   </div>
 
-  <!-- Floating Pen (Daily Notes) -->
-  <button id="fab-notes" class="rounded-full shadow-lg bg-amber-500 hover:bg-amber-600 text-white w-14 h-14 flex items-center justify-center">
-    <i class="fa-solid fa-pen"></i>
+  <!-- ============ Minimal Draggable Pen (opens Journal) ============ -->
+  <button id="pen-fab" aria-label="Open journal" title="Journal">
+    <!-- simple pen svg -->
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.0 1.0 0 0 0 0-1.41l-2.34-2.34a1.0 1.0 0 0 0-1.41 0l-1.82 1.82 3.75 3.75 1.82-1.82z" fill="currentColor"/>
+    </svg>
   </button>
+
+  <!-- ===================== Journal Page ===================== -->
+  <div id="journal" aria-label="Journal" role="dialog">
+    <div class="sheet">
+      <header>
+        <button id="journal-close" class="px-2 py-1 rounded hover:bg-slate-100" aria-label="Back">←</button>
+        <h3 id="journal-title" class="text-base font-semibold">Today</h3>
+        <div class="date-badge relative">
+          <span id="journal-date-label" class="text-sm text-slate-700">—</span>
+          <label class="relative inline-flex items-center px-2 py-1 rounded border border-slate-300 hover:bg-slate-50 cursor-pointer" title="Go to date">
+            <span>📅</span>
+            <input id="journal-date-input" type="date">
+          </label>
+        </div>
+      </header>
+      <main>
+        <textarea id="journal-text" placeholder="Write your daily journal…"></textarea>
+        <aside>
+          <div class="head">Previous notes</div>
+          <div id="journal-list"></div>
+        </aside>
+      </main>
+    </div>
+  </div>
 
   <!-- Modals -->
   <div id="add-karma-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Add New Action">
@@ -218,57 +287,6 @@
       <div class="flex justify-center space-x-4">
         <button id="confirm-modal-cancel-btn" class="bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-6 rounded-lg">Cancel</button>
         <button id="confirm-modal-confirm-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg">Delete</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Daily Notes (Full-screen Rich Editor) -->
-  <div id="notes-modal" class="hidden fixed inset-0 z-50">
-    <div class="absolute inset-0 bg-black/60"></div>
-    <div class="relative mx-auto max-w-3xl w-[96%] mt-6 mb-10">
-      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-        <div class="flex items-center justify-between px-4 py-3 border-b dark:border-slate-700">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-pen text-amber-500"></i>
-            <input id="notes-title" class="bg-transparent outline-none text-lg font-semibold w-[60vw] max-w-[520px]" placeholder="Daily note title...">
-          </div>
-          <div class="flex items-center gap-2">
-            <button id="notes-save-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg">Save</button>
-            <button id="notes-close-btn" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-semibold px-3 py-2 rounded-lg">Close</button>
-          </div>
-        </div>
-
-        <div class="toolbar px-3 py-2 bg-white dark:bg-slate-900 border-b dark:border-slate-700 flex flex-wrap items-center gap-2">
-          <button data-cmd="bold" title="Bold" class="bg-slate-100 dark:bg-slate-700"><i class="fa-solid fa-bold"></i></button>
-          <button data-cmd="italic" title="Italic" class="bg-slate-100 dark:bg-slate-700"><i class="fa-solid fa-italic"></i></button>
-          <button data-cmd="underline" title="Underline" class="bg-slate-100 dark:bg-slate-700"><i class="fa-solid fa-underline"></i></button>
-          <span class="mx-1 h-5 w-px bg-slate-300 dark:bg-slate-600"></span>
-          <button data-cmd="insertUnorderedList" title="Bulleted list" class="bg-slate-100 dark:bg-slate-700"><i class="fa-solid fa-list-ul"></i></button>
-          <button data-cmd="insertOrderedList" title="Numbered list" class="bg-slate-100 dark:bg-slate-700"><i class="fa-solid fa-list-ol"></i></button>
-          <span class="mx-1 h-5 w-px bg-slate-300 dark:bg-slate-600"></span>
-          <select id="font-size" class="bg-slate-100 dark:bg-slate-700 rounded-md px-2 py-1">
-            <option value="3">Normal</option>
-            <option value="4">Large</option>
-            <option value="5">XL</option>
-            <option value="6">2XL</option>
-          </select>
-          <label class="inline-flex items-center gap-2 text-sm">
-            <span class="text-slate-600 dark:text-slate-300">Color</span>
-            <input type="color" id="font-color" class="h-8 w-8 p-0 border rounded"/>
-          </label>
-          <button data-cmd="removeFormat" title="Clear formatting" class="bg-slate-100 dark:bg-slate-700"><i class="fa-solid fa-eraser"></i></button>
-          <span class="mx-1 h-5 w-px bg-slate-300 dark:bg-slate-600"></span>
-          <button id="undo-btn" title="Undo" class="bg-slate-100 dark:bg-slate-700"><i class="fa-solid fa-rotate-left"></i></button>
-          <button id="redo-btn" title="Redo" class="bg-slate-100 dark:bg-slate-700"><i class="fa-solid fa-rotate-right"></i></button>
-        </div>
-
-        <div class="editor-wrap px-4 py-4">
-          <div id="notes-editor" class="editor bg-white dark:bg-slate-900 rounded-xl p-4 shadow-inner" contenteditable="true" placeholder="Write your notes here..."></div>
-        </div>
-
-        <div class="px-4 pb-4">
-          <div id="notes-list" class="space-y-3"></div>
-        </div>
       </div>
     </div>
   </div>
@@ -344,18 +362,19 @@
       pushToggle:document.getElementById('toggle-push-reminders'),
       endDayTimeInput:document.getElementById('endday-time'),
       autoFinalizeInput:document.getElementById('auto-finalize-mins'),
-      // Notes UI
-      fabNotes:document.getElementById('fab-notes'),
-      notesModal:document.getElementById('notes-modal'),
-      notesTitle:document.getElementById('notes-title'),
-      notesEditor:document.getElementById('notes-editor'),
-      notesSaveBtn:document.getElementById('notes-save-btn'),
-      notesCloseBtn:document.getElementById('notes-close-btn'),
-      notesList:document.getElementById('notes-list')
+      // Journal UI
+      penFab:document.getElementById('pen-fab'),
+      journal:document.getElementById('journal'),
+      journalClose:document.getElementById('journal-close'),
+      journalTitle:document.getElementById('journal-title'),
+      journalDateLabel:document.getElementById('journal-date-label'),
+      journalDateInput:document.getElementById('journal-date-input'),
+      journalText:document.getElementById('journal-text'),
+      journalList:document.getElementById('journal-list')
     };
 
     const makeId=()=> (crypto&&crypto.randomUUID? crypto.randomUUID(): `${Date.now()}-${Math.random()}`);
-    let state={},unsubscribe,notesUnsub,pendingFinalDailyKarma=null,confirmAction=null;
+    let state={},unsubscribe,pendingFinalDailyKarma=null,confirmAction=null;
 
     const defaultState={totalKarma:0,dailyKarma:0,goals:[],unlockedBadges:[],dailyActions:[],customPrayashchits:[],settings:{endDayTime:"22:30",autoFinalizeAfterMins:30,remindersEnabled:true,pushRemindersEnabled:false},lastFinalizedDate:null,metrics:{completedPositiveToday:0,loggedNegativeToday:0}};
 
@@ -364,9 +383,10 @@
     const gitaQuotes=["You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions. - 2.47","Perform your obligatory duty, because action is indeed better than inaction. - 3.8","The wise see inaction in action and action in inaction. - 4.18","One who performs their duty without attachment, surrendering the results to the Supreme Lord, is unaffected by sinful action. - 5.10","It is better to live your own destiny imperfectly than to live an imitation of somebody else's life with perfection. - 3.35"];
     const prayashchitList=["Take a cold water bath","Avoid all sugar for 24 hours","Use stairs instead of the lift","30 minutes of selfless service (seva)","Maintain silence for 2 hours"];
 
+    /* ===================== Auth / State ===================== */
     auth.onAuthStateChanged(user=>{
-      if(user){dom.authOverlay.classList.add('hidden');dom.appContainer.classList.remove('hidden');loadState(user.uid);watchNotes();}
-      else{dom.authOverlay.classList.remove('hidden');dom.appContainer.classList.add('hidden');if(unsubscribe) unsubscribe();if(notesUnsub) notesUnsub();state={};}
+      if(user){dom.authOverlay.classList.add('hidden');dom.appContainer.classList.remove('hidden');loadState(user.uid);}
+      else{dom.authOverlay.classList.remove('hidden');dom.appContainer.classList.add('hidden');if(unsubscribe) unsubscribe();state={};}
     });
 
     auth.getRedirectResult().then((r)=>{if(r.user){showMessage(`Welcome, ${r.user.displayName||'friend'}!`,'success')}}).catch((e)=>{if(e.code!=='auth/no-auth-event'){showMessage(e.message,'error')}});
@@ -385,7 +405,6 @@
         renderAll();
         maybeFinalizeMissedDay();
         scheduleForegroundReminders();
-        maybeShowQueuedSummary();
       });
     }
 
@@ -398,6 +417,7 @@
 
     function renderAll(){ if(!state.goals) return; renderSidebar(); renderTaskList(); updateStats(); initSettingsUI(); showGitaQuoteOnce(); }
 
+    /* ===================== Sidebar / Tasks (unchanged) ===================== */
     function renderSidebar(){
       dom.sidebarGoalList.innerHTML='';
       if(state.goals.length>0){
@@ -482,92 +502,7 @@
       });
     }
 
-    function addGoal(){
-      const name=dom.goalNameInput.value.trim();
-      if(!name){showMessage("Practice name cannot be empty.","error");return;}
-      state.goals.push({id:makeId(),name,satatya:0,totalPracticeKarma:0,hadTasksToday:false,completedOneToday:false});
-      dom.goalNameInput.value=''; saveState();
-    }
-
-    function openAddKarmaModal(){
-      if(state.goals.length===0){showMessage("Please create a Practice first.","error");return;}
-      dom.karmaGoalSelect.innerHTML=state.goals.map(g=>`<option value="${String(g.id)}">${esc(g.name)}</option>`).join('');
-      dom.addKarmaForm.reset();
-      dom.addKarmaModal.classList.remove('hidden');
-    }
-
-    function handleAddKarma(e){
-      e.preventDefault();
-      const goalId=String(dom.karmaGoalSelect.value);
-      const name=dom.addKarmaForm.querySelector('#karma-name').value.trim();
-      const type=dom.addKarmaForm.querySelector('#karma-type').value;
-      const remindAt=dom.addKarmaForm.querySelector('#karma-remind-at')?.value||null;
-      const deadlineAt=dom.addKarmaForm.querySelector('#karma-deadline-at')?.value||null;
-      if(!name){showMessage("Action name is required.","error");return;}
-      const goal=state.goals.find(g=>String(g.id)===goalId);
-      if(goal&&type==='karma'){goal.hadTasksToday=true;}
-      state.dailyActions.push({id:makeId(),name,type,goalId,order:state.dailyActions.length,remindAt,deadlineAt});
-      dom.addKarmaModal.classList.add('hidden'); saveState();
-    }
-
-    function handleTaskClick(e){
-      const fireOverlay=e.target.closest('.fire-overlay');
-      const logVikarmaBtn=e.target.closest('.log-vikarma-btn');
-      const deleteBtn=e.target.closest('.delete-task-btn');
-      if(fireOverlay){handleKarmaCompletion(e);return;}
-      if(logVikarmaBtn){handleVikarmaLog(e);return;}
-      if(deleteBtn){handleDeleteTask(e);return;}
-      const item=e.target.closest('.karma-item'); if(!item) return;
-      const task=state.dailyActions.find(t=>String(t.id)===String(item.dataset.id));
-      if(!task||task.type==='vikarma'||task.type==='prayashchit') return;
-      document.querySelectorAll('.fire-overlay').forEach(el=>{if(el.parentElement!==item) el.remove();});
-      if(item.querySelector('.fire-overlay')){item.querySelector('.fire-overlay').remove();}
-      else{
-        const o=document.createElement('div');o.className='fire-overlay';o.innerHTML=`<i class="fas fa-fire text-orange-500 text-4xl" aria-hidden="true"></i>`;item.appendChild(o);
-      }
-    }
-
-    function handleKarmaCompletion(e){
-      const item=e.target.closest('.karma-item'); if(!item) return;
-      const id=String(item.dataset.id);
-      const idx=state.dailyActions.findIndex(t=>String(t.id)===id); if(idx===-1) return;
-      const task=state.dailyActions[idx];
-      const goal=state.goals.find(g=>String(g.id)===String(task.goalId));
-      state.dailyKarma=(state.dailyKarma||0)+1;
-      state.metrics.completedPositiveToday=(state.metrics.completedPositiveToday||0)+1;
-      if(goal){goal.totalPracticeKarma=(goal.totalPracticeKarma||0)+1;goal.completedOneToday=true;}
-      state.dailyActions.splice(idx,1);
-      try{dom.fireSound.currentTime=0;dom.fireSound.play().catch(()=>{})}catch(e){}
-      if(navigator.vibrate) navigator.vibrate(50);
-      item.classList.add('completed');
-      setTimeout(saveState,500);
-    }
-
-    function handleVikarmaLog(e){
-      const item=e.target.closest('.karma-item'); if(!item) return;
-      const id=String(item.dataset.id);
-      const idx=state.dailyActions.findIndex(t=>String(t.id)===id); if(idx===-1) return;
-      const task=state.dailyActions[idx];
-      const goal=state.goals.find(g=>String(g.id)===String(task.goalId));
-      state.dailyKarma=(state.dailyKarma||0)-1;
-      state.metrics.loggedNegativeToday=(state.metrics.loggedNegativeToday||0)+1;
-      if(goal) goal.totalPracticeKarma=(goal.totalPracticeKarma||0)-1;
-      state.dailyActions.splice(idx,1);
-      if(navigator.vibrate) navigator.vibrate([100,30,100]);
-      item.classList.add('completed');
-      setTimeout(saveState,500);
-    }
-
-    function handleDeleteTask(e){
-      const item=e.target.closest('.karma-item'); if(!item) return;
-      const id=String(item.dataset.id);
-      const task=state.dailyActions.find(t=>String(t.id)===id);
-      if(!task) return;
-      if(task.type==='vikarma'){showMessage('Negative actions should be logged, not deleted.','error');return;}
-      state.dailyActions=state.dailyActions.filter(t=>String(t.id)!==id);
-      showMessage('Action removed.','info'); saveState();
-    }
-
+    /* ===================== Daily flow (unchanged) ===================== */
     function endDay(){
       let finalDailyKarma=state.dailyKarma||0;
       const missed=state.dailyActions.filter(t=>t.type==='karma');
@@ -600,6 +535,7 @@
       saveState();
     }
 
+    /* ===================== Drag & drop list (unchanged) ===================== */
     let draggedItem=null;
     dom.taskList.addEventListener('dragstart',e=>{ if(e.target.classList.contains('karma-item')){draggedItem=e.target; setTimeout(()=>e.target.classList.add('dragging'),0);} });
     dom.taskList.addEventListener('dragover',e=>{
@@ -620,6 +556,7 @@
       return els.reduce((c,child)=>{const b=child.getBoundingClientRect();const off=y-b.top-b.height/2;if(off<0&&off>c.offset){return{offset:off,element:child}}else{return c}}, {offset:Number.NEGATIVE_INFINITY}).element;
     }
 
+    /* ===================== Toasters, helpers ===================== */
     function showMessage(message,type='success'){
       const box=document.getElementById('message-box');
       box.textContent=message;
@@ -629,28 +566,29 @@
       else box.classList.add('bg-blue-100','dark:bg-blue-900','text-blue-800','dark:text-blue-200');
       box.classList.remove('hidden'); setTimeout(()=>box.classList.add('hidden'),3000);
     }
-
     function animateValue(el,target){const start=parseInt(el.textContent.replace(/,/g,''))||0; if(start===target){el.textContent=target;return;}
       const dur=300; let t0=null; const step=(t)=>{if(!t0) t0=t; const p=Math.min((t-t0)/dur,1); el.textContent=Math.floor(p*(target-start)+start); if(p<1) requestAnimationFrame(step)}; requestAnimationFrame(step);
     }
 
     function showBadgeUnlockModal(b){
-      dom.badgeModalContent.innerHTML=`
+      const c=document.getElementById('badge-modal-content');
+      c.innerHTML=`
         <i class="fas ${b.icon} text-6xl mb-4 ${b.color} badge-ceremony-icon" aria-hidden="true"></i>
         <h2 class="text-3xl font-bold">Badge Unlocked!</h2>
         <p class="text-xl mt-2">${esc(b.name)}</p>
         <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${esc(b.meaning)}"</p>
         <button onclick="document.getElementById('badge-modal').classList.add('hidden')" class="mt-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-semibold py-2 px-6 rounded-lg">Continue</button>`;
-      dom.badgeModal.classList.remove('hidden');
+      document.getElementById('badge-modal').classList.remove('hidden');
     }
     function showBadgeInfoModal(b){
-      dom.badgeModalContent.innerHTML=`
+      const c=document.getElementById('badge-modal-content');
+      c.innerHTML=`
         <i class="fas ${b.icon} text-6xl mb-4 text-slate-400" aria-hidden="true"></i>
         <h2 class="text-3xl font-bold">${esc(b.name)}</h2>
         <p class="text-slate-500 dark:text-slate-400 mt-2">Requires ${b.days} days of Sātatya in a single practice to unlock.</p>
         <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${esc(b.meaning)}"</p>
         <button onclick="document.getElementById('badge-modal').classList.add('hidden')" class="mt-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-semibold py-2 px-6 rounded-lg">Close</button>`;
-      dom.badgeModal.classList.remove('hidden');
+      document.getElementById('badge-modal').classList.remove('hidden');
     }
 
     function showSummaryModal(finalDailyKarma,missedCount,opts={}){
@@ -658,7 +596,8 @@
       const earned=(opts.earned!=null)?opts.earned:(state.metrics?.completedPositiveToday||0);
       const negatives=(opts.negatives!=null)?opts.negatives:(state.metrics?.loggedNegativeToday||0);
       const planned=earned+(missedCount||0);
-      dom.summaryModalContent.innerHTML=`
+      const c=document.getElementById('summary-modal-content');
+      c.innerHTML=`
         <h2 class="text-3xl font-bold">${esc(title)}</h2>
         <div class="mt-4 text-left bg-slate-100 dark:bg-slate-700 rounded-lg p-4">
           <div class="flex justify-between"><span>Planned (positive)</span><span class="font-semibold">${planned}</span></div>
@@ -672,90 +611,49 @@
           </div>
         </div>
         <button id="close-summary-btn" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg">Continue</button>`;
-      dom.summaryModal.classList.remove('hidden');
+      document.getElementById('summary-modal').classList.remove('hidden');
       document.getElementById('close-summary-btn').onclick=()=>{
-        dom.summaryModal.classList.add('hidden');
+        document.getElementById('summary-modal').classList.add('hidden');
         if(typeof opts.onContinue==='function'){opts.onContinue();return;}
         if(finalDailyKarma<0){
           renderPrayashchitOptions();
-          dom.prayashchitModal.classList.remove('hidden');
+          document.getElementById('prayashchit-modal').classList.remove('hidden');
           setPrayashchitHandler(()=>{
             const selected=document.querySelector('input[name="prayashchit"]:checked');
             const choice=selected?selected.value:null;
-            dom.prayashchitModal.classList.add('hidden'); finalizeDay(finalDailyKarma,choice);
+            document.getElementById('prayashchit-modal').classList.add('hidden'); finalizeDay(finalDailyKarma,choice);
           });
         }else{finalizeDay(finalDailyKarma);}
       };
     }
 
-    function showSummaryOnlyQueued(ps){
-      showSummaryModal(ps.finalDailyKarma,ps.missedCount,{title:`Yesterday Complete (${ps.dateISO})`,earned:ps.earned||0,negatives:ps.negatives||0,onContinue:()=>{
-        if(state.pendingPrayashchit){
-          renderPrayashchitOptions();
-          dom.prayashchitModal.classList.remove('hidden');
-          setPrayashchitHandler(()=>{
-            const selected=document.querySelector('input[name="prayashchit"]:checked');
-            const choice=selected?selected.value:null;
-            dom.prayashchitModal.classList.add('hidden');
-            if(choice){state.dailyActions.push({id:makeId(),name:choice,type:'prayashchit',goalId:null,order:0});}
-            clearField('pendingPrayashchit'); saveState();
-          });
-        }
-      }});
-    }
-
-    function queueSummary({finalDailyKarma,missedCount,dateISO,earned=0,negatives=0}){
-      state.pendingSummary={finalDailyKarma,missedCount,dateISO,earned,negatives};
-      state.pendingPrayashchit=finalDailyKarma<0;
-      saveState();
-    }
-
-    function maybeShowQueuedSummary(){
-      const ps=state.pendingSummary; if(!ps) return;
-      if(!dom.summaryModal.classList.contains('hidden')) return;
-      const uid=auth.currentUser?.uid;
-      if(uid){ db.collection('users').doc(uid).set({pendingSummary:firebase.firestore.FieldValue.delete()},{merge:true}).catch(console.error); }
-      state.pendingSummary=null;
-      showSummaryOnlyQueued(ps);
-    }
-
     function renderPrayashchitOptions(){
       const all=[...prayashchitList,...(state.customPrayashchits||[])];
-      dom.prayashchitOptionsEl.innerHTML='';
+      const el=document.getElementById('prayashchit-options');
+      el.innerHTML='';
       [...all].sort(()=>.5-Math.random()).slice(0,3).forEach((p,i)=>{
         const s=esc(p);
-        dom.prayashchitOptionsEl.innerHTML+=`<label class="flex items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg"><input type="radio" name="prayashchit" value="${s}" class="mr-3" ${i===0?'checked':''}>${s}</label>`;
+        el.innerHTML+=`<label class="flex items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg"><input type="radio" name="prayashchit" value="${s}" class="mr-3" ${i===0?'checked':''}>${s}</label>`;
       });
     }
-    function addCustomPrayashchit(){
-      const v=document.getElementById('custom-prayashchit-input').value.trim();
-      if(v&&!(state.customPrayashchits||[]).includes(v)){
-        state.customPrayashchits=state.customPrayashchits||[]; state.customPrayashchits.push(v);
-        document.getElementById('custom-prayashchit-input').value=''; renderPrayashchitOptions(); saveState();
-      }
-    }
+    function setPrayashchitHandler(fn){ document.getElementById('accept-prayashchit-btn').onclick=null; document.getElementById('accept-prayashchit-btn').onclick=fn; }
 
-    function handleResetKarma(){
-      openConfirmModal('Reset All Karma?','This will reset your Total Karma and all Practice Karma scores to zero. This cannot be undone.',()=>{
-        state.totalKarma=0; state.goals.forEach(g=>g.totalPracticeKarma=0); showMessage('Your accumulated Karma has been reset.','info'); saveState();
-      });
+    function initSettingsUI(){ const s=state.settings||defaultState.settings;
+      document.getElementById('toggle-inapp-reminders').checked=!!s.remindersEnabled;
+      document.getElementById('toggle-push-reminders').checked=!!s.pushRemindersEnabled;
+      document.getElementById('endday-time').value=s.endDayTime||"22:30";
+      document.getElementById('auto-finalize-mins').value=s.autoFinalizeAfterMins??30;
     }
-
-    function openConfirmModal(title,text,onConfirm){
-      dom.confirmModalTitle.textContent=title; dom.confirmModalText.textContent=text; dom.confirmModal.classList.remove('hidden'); confirmAction=onConfirm;
-    }
-    function toggleSidebar(show){ if(show){dom.sidebar.classList.remove('-translate-x-full');dom.sidebarOverlay.classList.remove('hidden');} else {dom.sidebar.classList.add('-translate-x-full');dom.sidebarOverlay.classList.add('hidden');} }
-    function setPrayashchitHandler(fn){ dom.acceptPrayashchitBtn.onclick=null; dom.acceptPrayashchitBtn.onclick=fn; }
-    function initSettingsUI(){ const s=state.settings||defaultState.settings; dom.remindersToggle.checked=!!s.remindersEnabled; dom.pushToggle.checked=!!s.pushRemindersEnabled; dom.endDayTimeInput.value=s.endDayTime||"22:30"; dom.autoFinalizeInput.value=s.autoFinalizeAfterMins??30; }
     function bindSettingsEvents(){
-      dom.remindersToggle.addEventListener('change',()=>{state.settings.remindersEnabled=dom.remindersToggle.checked; saveState();});
-      dom.pushToggle.addEventListener('change',async ()=>{
-        if(dom.pushToggle.checked){ const ok=await ensurePushPermission(); state.settings.pushRemindersEnabled=!!ok; dom.pushToggle.checked=!!ok; }
+      document.getElementById('toggle-inapp-reminders').addEventListener('change',()=>{state.settings.remindersEnabled=document.getElementById('toggle-inapp-reminders').checked; saveState();});
+      document.getElementById('toggle-push-reminders').addEventListener('change',async ()=>{
+        const el=document.getElementById('toggle-push-reminders');
+        if(el.checked){ const ok=await ensurePushPermission(); state.settings.pushRemindersEnabled=!!ok; el.checked=!!ok; }
         else{ state.settings.pushRemindersEnabled=false; }
         saveState();
       });
-      dom.endDayTimeInput.addEventListener('change',()=>{state.settings.endDayTime=dom.endDayTimeInput.value||"22:30"; saveState();});
-      dom.autoFinalizeInput.addEventListener('change',()=>{const v=parseInt(dom.autoFinalizeInput.value,10); state.settings.autoFinalizeAfterMins=isNaN(v)?30:Math.max(5,v); saveState();});
+      document.getElementById('endday-time').addEventListener('change',()=>{state.settings.endDayTime=document.getElementById('endday-time').value||"22:30"; saveState();});
+      document.getElementById('auto-finalize-mins').addEventListener('change',()=>{const v=parseInt(document.getElementById('auto-finalize-mins').value,10); state.settings.autoFinalizeAfterMins=isNaN(v)?30:Math.max(5,v); saveState();});
     }
     bindSettingsEvents();
 
@@ -782,11 +680,9 @@
         if(state.lastFinalizedDate!==todayLocal&&state._autoFinalizeAt&&now>=state._autoFinalizeAt){
           const missed=state.dailyActions.filter(t=>t.type==='karma');
           let finalDailyKarma=(state.dailyKarma||0)-missed.length;
-          queueSummary({finalDailyKarma,missedCount:missed.length,dateISO:todayLocal,earned:state.metrics?.completedPositiveToday||0,negatives:state.metrics?.loggedNegativeToday||0});
           finalizeDay(finalDailyKarma);
           state.lastFinalizedDate=todayLocal; clearField('_autoFinalizeAt'); saveState();
           showMessage('Day auto-finalized.','success'); maybeNotify('Day finalized',`Final karma: ${finalDailyKarma>=0?'+':''}${finalDailyKarma}`);
-          maybeShowQueuedSummary();
         }
       }
     }
@@ -802,9 +698,7 @@
       if(state.lastFinalizedDate!==todayLocal){
         const missed=state.dailyActions.filter(t=>t.type==='karma');
         let finalDailyKarma=(state.dailyKarma||0)-missed.length;
-        const y=state.lastFinalizedDate||localDateISO(new Date(Date.now()-86400000));
-        queueSummary({finalDailyKarma,missedCount:missed.length,dateISO:y,earned:state.metrics?.completedPositiveToday||0,negatives:state.metrics?.loggedNegativeToday||0});
-        finalizeDay(finalDailyKarma); state.lastFinalizedDate=todayLocal; saveState(); showMessage('Finalized previous day on resume.','info'); maybeShowQueuedSummary();
+        finalizeDay(finalDailyKarma); state.lastFinalizedDate=todayLocal; saveState(); showMessage('Finalized previous day on resume.','info');
       }
     }
 
@@ -820,123 +714,305 @@
       }catch(e){console.error(e);showMessage(e.message||'Push set-up failed.','error');return false;}
     }
 
-    function watchNotes(){
-      if(notesUnsub) notesUnsub();
-      const uid=auth.currentUser?.uid; if(!uid) return;
-      notesUnsub=db.collection('users').doc(uid).collection('notes').orderBy('createdAt','desc').onSnapshot(snap=>{
-        const list=[]; snap.forEach(d=>list.push({id:d.id,...d.data()})); renderNotes(list);
-      },(err)=>{console.error('notes listener error:',err); showMessage('Cannot load notes: '+(err.message||err),'error');});
-    }
-    function renderNotes(list){
-      const el=dom.notesList; el.innerHTML='';
-      if(!list.length){el.innerHTML=`<p class="text-slate-500 italic px-1 pb-4">No notes yet.</p>`; return;}
-      list.forEach(n=>{
-        const ts=n.createdAt?.toDate?.()||(n.createdAt?new Date(n.createdAt):new Date());
-        el.innerHTML+=`
-          <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow">
-            <div class="flex items-center justify-between">
-              <p class="font-semibold">${esc(n.title||'Untitled')}</p>
-              <span class="text-xs text-slate-400">${ts.toLocaleString()}</span>
-            </div>
-            <div class="mt-2 prose dark:prose-invert max-w-none">${n.bodyHtml||esc(n.body||'')}</div>
-            ${n.audioUrl?`<audio class="mt-2 w-full" controls src="${esc(n.audioUrl)}"></audio>`:''}
-          </div>`;
-      });
-    }
-    async function saveNote({title,html}){
-      const uid=auth.currentUser?.uid; if(!uid){showMessage('Not signed in.','error');return;}
+    /* ===================== Minimal Journal Implementation ===================== */
+    const JOURNAL_LOCAL_KEY='journal-local';
+    function isoToday(){ return new Date().toLocaleDateString('en-CA'); }
+
+    // Draggable + persist position
+    (function initPenDrag(){
+      const btn=dom.penFab;
+      // restore position
       try{
-        await db.collection('users').doc(uid).collection('notes').add({
-          title:title||'',
-          bodyHtml:html||'',
-          createdAt:firebase.firestore.FieldValue.serverTimestamp()
-        });
-        showMessage('Note saved.','success');
-      }catch(e){console.error('saveNote error:',e);showMessage('Failed to save note: '+(e.message||e),'error');}
-    }
-
-    // Notes editor helpers
-    function openNotes(){ dom.notesModal.classList.remove('hidden'); document.body.style.overflow='hidden'; }
-    function closeNotes(){ dom.notesModal.classList.add('hidden'); document.body.style.overflow=''; }
-    function exec(cmd,val=null){ document.execCommand(cmd,false,val); dom.notesEditor.focus(); }
-
-    dom.fabNotes.addEventListener('click',()=>{ openNotes(); });
-    dom.notesCloseBtn.addEventListener('click',()=>{ closeNotes(); });
-    dom.notesSaveBtn.addEventListener('click',async ()=>{
-      const title=dom.notesTitle.value.trim();
-      const html=dom.notesEditor.innerHTML.trim();
-      await saveNote({title,html});
-      dom.notesTitle.value=''; dom.notesEditor.innerHTML='';
-    });
-    document.querySelectorAll('.toolbar [data-cmd]').forEach(btn=>{
-      btn.addEventListener('click',()=>{ exec(btn.dataset.cmd); });
-    });
-    document.getElementById('font-size').addEventListener('change',(e)=>{ exec('fontSize',e.target.value); });
-    document.getElementById('font-color').addEventListener('input',(e)=>{ exec('foreColor',e.target.value); });
-    document.getElementById('undo-btn').addEventListener('click',()=>exec('undo'));
-    document.getElementById('redo-btn').addEventListener('click',()=>exec('redo'));
-
-    // Dictation/Recording removed from UI in favor of rich editor (storage code retained above for future use)
-
-    function switchView(name){} // tabs removed
-
-    let _gitaShown=false; function showGitaQuoteOnce(){ if(_gitaShown) return; const q=gitaQuotes[Math.floor(Math.random()*gitaQuotes.length)]; dom.gitaQuoteEl.textContent=q; _gitaShown=true; }
-
-    function quickLogVikarma(){
-      const name=(prompt('What happened? (optional description)')||'').trim();
-      let goalId=null;
-      if(state.goals&&state.goals.length){
-        const options=state.goals.map((g,i)=>`${i+1}. ${g.name}`).join('\n');
-        const pick=prompt(`Attribute to a practice? Enter number or leave blank:\n${options}`);
-        const idx=parseInt(pick,10);
-        if(!isNaN(idx)&&idx>=1&&idx<=state.goals.length){goalId=String(state.goals[idx-1].id);}
+        const saved=JSON.parse(localStorage.getItem('pen-pos')||'null');
+        if(saved && typeof saved.x==='number' && typeof saved.y==='number'){
+          btn.style.left=saved.x+'px'; btn.style.top=saved.y+'px';
+          btn.style.right='auto'; btn.style.bottom='auto';
+        }
+      }catch(e){}
+      let drag=null;
+      function onStart(ev){
+        const p=('touches' in ev)? ev.touches[0] : ev;
+        const rect=btn.getBoundingClientRect();
+        drag={startX:p.clientX, startY:p.clientY, originX:rect.left, originY:rect.top};
+        ev.preventDefault();
       }
-      state.dailyKarma=(state.dailyKarma||0)-1;
-      state.metrics=state.metrics||{completedPositiveToday:0,loggedNegativeToday:0};
-      state.metrics.loggedNegativeToday=(state.metrics.loggedNegativeToday||0)+1;
-      if(goalId){const goal=state.goals.find(g=>String(g.id)===goalId); if(goal) goal.totalPracticeKarma=(goal.totalPracticeKarma||0)-1;}
-      if(name){state.dailyActions.push({id:makeId(),name:`Vikarma: ${name}`,type:'vikarma',goalId,order:state.dailyActions.length});}
-      showMessage('Vikarma logged.','info'); saveState();
+      function onMove(ev){
+        if(!drag) return;
+        const p=('touches' in ev)? ev.touches[0] : ev;
+        let x=drag.originX + (p.clientX - drag.startX);
+        let y=drag.originY + (p.clientY - drag.startY);
+        const w=window.innerWidth, h=window.innerHeight;
+        x=Math.max(8, Math.min(x, w-52)); y=Math.max(8, Math.min(y, h-52));
+        btn.style.left=x+'px'; btn.style.top=y+'px';
+        btn.style.right='auto'; btn.style.bottom='auto';
+      }
+      function onEnd(){
+        if(!drag) return;
+        const rect=btn.getBoundingClientRect();
+        const snapLeft = rect.left < window.innerWidth/2;
+        const x = snapLeft ? 12 : window.innerWidth - rect.width - 12;
+        const y = Math.max(8, Math.min(rect.top, window.innerHeight - rect.height - 8));
+        btn.style.left=x+'px'; btn.style.top=y+'px';
+        btn.style.right='auto'; btn.style.bottom='auto';
+        try{localStorage.setItem('pen-pos', JSON.stringify({x,y}));}catch(e){}
+        drag=null;
+      }
+      btn.addEventListener('mousedown',onStart);
+      window.addEventListener('mousemove',onMove);
+      window.addEventListener('mouseup',onEnd);
+      btn.addEventListener('touchstart',onStart,{passive:false});
+      window.addEventListener('touchmove',onMove,{passive:false});
+      window.addEventListener('touchend',onEnd);
+    })();
+
+    // Open / close journal
+    dom.penFab.addEventListener('click',()=>openJournal());
+    dom.journalClose.addEventListener('click',()=>closeJournal());
+    function openJournal(dateStr){
+      const d=dateStr || isoToday();
+      dom.journal.classList.add('show');
+      document.body.style.overflow='hidden';
+      setJournalDate(d);
+      loadJournalList();
+      loadJournalContent(d);
+    }
+    function closeJournal(){
+      dom.journal.classList.remove('show');
+      document.body.style.overflow='';
     }
 
-    dom.googleSigninBtn.addEventListener('click',()=>{
+    // Date navigation
+    dom.journalDateInput.addEventListener('change', (e)=> {
+      const d=e.target.value || isoToday();
+      setJournalDate(d);
+      loadJournalContent(d);
+    });
+
+    function setJournalDate(dateStr){
+      dom.journalDateInput.value=dateStr;
+      dom.journalDateLabel.textContent=new Date(dateStr).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+      dom.journalTitle.textContent = dateStr===isoToday()? 'Today' : dateStr;
+    }
+
+    // Autosave (Firestore if signed in, else local)
+    let saveTimer=null;
+    dom.journalText.addEventListener('input',()=>{
+      if(saveTimer) clearTimeout(saveTimer);
+      saveTimer=setTimeout(()=>saveCurrentJournal(),500);
+    });
+
+    async function saveCurrentJournal(){
+      const date=dom.journalDateInput.value || isoToday();
+      const content=dom.journalText.value;
+      const uid=auth.currentUser?.uid;
+      try{
+        if(uid){
+          await db.collection('users').doc(uid).collection('journal').doc(date).set({
+            content, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge:true });
+        }else{
+          const map=JSON.parse(localStorage.getItem(JOURNAL_LOCAL_KEY)||'{}');
+          map[date]={content, updatedAt: Date.now()};
+          localStorage.setItem(JOURNAL_LOCAL_KEY, JSON.stringify(map));
+        }
+        // update list preview quickly
+        upsertListItem(date, content);
+      }catch(e){ console.error(e); showMessage('Failed to save note','error'); }
+    }
+
+    // Load content for a given date
+    async function loadJournalContent(date){
+      const uid=auth.currentUser?.uid;
+      if(uid){
+        try{
+          const doc=await db.collection('users').doc(uid).collection('journal').doc(date).get();
+          const content=doc.exists? (doc.data().content||'') : '';
+          dom.journalText.value = content;
+        }catch(e){ console.error(e); dom.journalText.value=''; }
+      }else{
+        const map=JSON.parse(localStorage.getItem(JOURNAL_LOCAL_KEY)||'{}');
+        dom.journalText.value = map[date]?.content || '';
+      }
+    }
+
+    // Load previous list (last 90 days by default)
+    async function loadJournalList(){
+      const uid=auth.currentUser?.uid;
+      const listEl=dom.journalList;
+      listEl.innerHTML='';
+      if(uid){
+        try{
+          const snap=await db.collection('users').doc(uid).collection('journal').orderBy('updatedAt','desc').limit(120).get();
+          if(snap.empty){ listEl.innerHTML='<p class="px-3 py-3 text-slate-500 italic">No notes yet.</p>'; return; }
+          snap.forEach(d=>{
+            const date=d.id, content=(d.data().content||'').trim();
+            addListItem(date, content);
+          });
+        }catch(e){ console.error(e); listEl.innerHTML='<p class="px-3 py-3 text-red-500">Failed to load notes.</p>'; }
+      }else{
+        const map=JSON.parse(localStorage.getItem(JOURNAL_LOCAL_KEY)||'{}');
+        const entries=Object.entries(map).sort((a,b)=> (b[0]).localeCompare(a[0]));
+        if(!entries.length){ listEl.innerHTML='<p class="px-3 py-3 text-slate-500 italic">No notes yet.</p>'; return; }
+        entries.forEach(([date,rec])=> addListItem(date, (rec.content||'').trim()));
+      }
+    }
+    function addListItem(date, content){
+      const btn=document.createElement('button');
+      btn.className='note-item';
+      btn.innerHTML=`<div class="date">${esc(date)}</div><div class="preview">${esc(content||'(empty)')}</div>`;
+      btn.addEventListener('click',()=>{ setJournalDate(date); loadJournalContent(date); });
+      dom.journalList.appendChild(btn);
+    }
+    function upsertListItem(date, content){
+      const all=[...dom.journalList.querySelectorAll('.note-item')];
+      const existing=all.find(b=>b.querySelector('.date')?.textContent===date);
+      if(existing){
+        existing.querySelector('.preview').textContent=content||'(empty)';
+        // move to top
+        dom.journalList.prepend(existing);
+      }else{
+        addListItem(date, content);
+        // keep recent first
+        const items=[...dom.journalList.children];
+        items.sort((a,b)=> b.querySelector('.date').textContent.localeCompare(a.querySelector('.date').textContent));
+        items.forEach(i=>dom.journalList.appendChild(i));
+      }
+    }
+
+    /* ===================== Misc UI binds ===================== */
+    function showGitaQuoteOnce(){ const q=gitaQuotes[Math.floor(Math.random()*gitaQuotes.length)]; dom.gitaQuoteEl.textContent=q; }
+    function openConfirmModal(title,text,onConfirm){
+      document.getElementById('confirm-modal-title').textContent=title;
+      document.getElementById('confirm-modal-text').textContent=text;
+      document.getElementById('confirm-modal').classList.remove('hidden');
+      confirmAction=onConfirm;
+    }
+    document.getElementById('confirm-modal-cancel-btn').addEventListener('click',()=>document.getElementById('confirm-modal').classList.add('hidden'));
+    document.getElementById('confirm-modal-confirm-btn').addEventListener('click',()=>{ if(typeof confirmAction==='function'){confirmAction();} document.getElementById('confirm-modal').classList.add('hidden'); });
+
+    function handleTaskClick(e){
+      const fireOverlay=e.target.closest('.fire-overlay');
+      const logVikarmaBtn=e.target.closest('.log-vikarma-btn');
+      const deleteBtn=e.target.closest('.delete-task-btn');
+      if(fireOverlay){handleKarmaCompletion(e);return;}
+      if(logVikarmaBtn){handleVikarmaLog(e);return;}
+      if(deleteBtn){handleDeleteTask(e);return;}
+      const item=e.target.closest('.karma-item'); if(!item) return;
+      const task=state.dailyActions.find(t=>String(t.id)===String(item.dataset.id));
+      if(!task||task.type==='vikarma'||task.type==='prayashchit') return;
+      document.querySelectorAll('.fire-overlay').forEach(el=>{if(el.parentElement!==item) el.remove();});
+      if(item.querySelector('.fire-overlay')){item.querySelector('.fire-overlay').remove();}
+      else{
+        const o=document.createElement('div');o.className='fire-overlay';o.innerHTML=`<i class="fas fa-fire text-orange-500 text-4xl" aria-hidden="true"></i>`;item.appendChild(o);
+      }
+    }
+    function handleKarmaCompletion(e){
+      const item=e.target.closest('.karma-item'); if(!item) return;
+      const id=String(item.dataset.id);
+      const idx=state.dailyActions.findIndex(t=>String(t.id)===id); if(idx===-1) return;
+      const task=state.dailyActions[idx];
+      const goal=state.goals.find(g=>String(g.id)===String(task.goalId));
+      state.dailyKarma=(state.dailyKarma||0)+1;
+      state.metrics.completedPositiveToday=(state.metrics.completedPositiveToday||0)+1;
+      if(goal){goal.totalPracticeKarma=(goal.totalPracticeKarma||0)+1;goal.completedOneToday=true;}
+      state.dailyActions.splice(idx,1);
+      try{document.getElementById('fire-sound').currentTime=0;document.getElementById('fire-sound').play().catch(()=>{})}catch(e){}
+      if(navigator.vibrate) navigator.vibrate(50);
+      item.classList.add('completed');
+      setTimeout(saveState,500);
+    }
+    function handleVikarmaLog(e){
+      const item=e.target.closest('.karma-item'); if(!item) return;
+      const id=String(item.dataset.id);
+      const idx=state.dailyActions.findIndex(t=>String(t.id)===id); if(idx===-1) return;
+      const task=state.dailyActions[idx];
+      const goal=state.goals.find(g=>String(g.id)===String(task.goalId));
+      state.dailyKarma=(state.dailyKarma||0)-1;
+      state.metrics.loggedNegativeToday=(state.metrics.loggedNegativeToday||0)+1;
+      if(goal) goal.totalPracticeKarma=(goal.totalPracticeKarma||0)-1;
+      state.dailyActions.splice(idx,1);
+      if(navigator.vibrate) navigator.vibrate([100,30,100]);
+      item.classList.add('completed');
+      setTimeout(saveState,500);
+    }
+    function handleDeleteTask(e){
+      const item=e.target.closest('.karma-item'); if(!item) return;
+      const id=String(item.dataset.id);
+      const task=state.dailyActions.find(t=>String(t.id)===id);
+      if(!task) return;
+      if(task.type==='vikarma'){showMessage('Negative actions should be logged, not deleted.','error');return;}
+      state.dailyActions=state.dailyActions.filter(t=>String(t.id)!==id);
+      showMessage('Action removed.','info'); saveState();
+    }
+
+    document.getElementById('google-signin-btn').addEventListener('click',()=>{
       const provider=new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(provider).catch(err=>{
         if(['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(err.code)){auth.signInWithRedirect(provider);}
         else{showMessage(err.message,'error');}
       });
     });
-    dom.googleRedirectFallback.addEventListener('click',(e)=>{e.preventDefault(); const provider=new firebase.auth.GoogleAuthProvider(); auth.signInWithRedirect(provider);});
-    dom.emailSignupBtn.addEventListener('click',()=>{auth.createUserWithEmailAndPassword(dom.emailInput.value,dom.passwordInput.value).catch(e=>showMessage(e.message,'error'));});
-    dom.emailSigninBtn.addEventListener('click',()=>{auth.signInWithEmailAndPassword(dom.emailInput.value,dom.passwordInput.value).catch(e=>showMessage(e.message,'error'));});
-    dom.forgotPasswordBtn.addEventListener('click',async ()=>{
+    document.getElementById('google-redirect-fallback').addEventListener('click',(e)=>{e.preventDefault(); const provider=new firebase.auth.GoogleAuthProvider(); auth.signInWithRedirect(provider);});
+    document.getElementById('email-signup-btn').addEventListener('click',()=>{auth.createUserWithEmailAndPassword(dom.emailInput.value,dom.passwordInput.value).catch(e=>showMessage(e.message,'error'));});
+    document.getElementById('email-signin-btn').addEventListener('click',()=>{auth.signInWithEmailAndPassword(dom.emailInput.value,dom.passwordInput.value).catch(e=>showMessage(e.message,'error'));});
+    document.getElementById('forgot-password-btn').addEventListener('click',async ()=>{
       const email=dom.emailInput.value.trim();
       if(!email){showMessage('Enter your email above first.','error');return;}
       try{await auth.sendPasswordResetEmail(email);showMessage('Password reset email sent.','success');}
       catch(e){showMessage(e.message,'error');}
     });
-    dom.signoutBtn.addEventListener('click',()=>auth.signOut());
-    dom.menuBtn.addEventListener('click',()=>toggleSidebar(true));
-    dom.sidebarOverlay.addEventListener('click',()=>toggleSidebar(false));
-    dom.addGoalBtn.addEventListener('click',addGoal);
-    dom.sidebarGoalList.addEventListener('click',(e)=>{ if(e.target.closest('.delete-goal-btn')){ const goalId=String(e.target.closest('.delete-goal-btn').dataset.goalId); openConfirmModal('Delete Practice?','This will remove the practice and any of its tasks for today. This cannot be undone.',()=>{state.goals=state.goals.filter(g=>String(g.id)!==goalId); state.dailyActions=state.dailyActions.filter(t=>String(t.goalId)!==goalId); showMessage('Practice removed.','info'); saveState();}); }});
-    dom.addKarmaBtn.addEventListener('click',openAddKarmaModal);
-    dom.addKarmaForm.addEventListener('submit',handleAddKarma);
-    dom.cancelAddKarmaBtn.addEventListener('click',()=>document.getElementById('add-karma-modal').classList.add('hidden'));
-    dom.taskList.addEventListener('click',handleTaskClick);
-    dom.resetDayBtn.addEventListener('click',endDay);
-    dom.resetKarmaBtn.addEventListener('click',handleResetKarma);
-    dom.sidebarBadgeContainer.addEventListener('click',e=>{
+    document.getElementById('signout-btn').addEventListener('click',()=>auth.signOut());
+    document.getElementById('menu-btn').addEventListener('click',()=>toggleSidebar(true));
+    document.getElementById('sidebar-overlay').addEventListener('click',()=>toggleSidebar(false));
+    document.getElementById('add-goal-btn').addEventListener('click',addGoal);
+    document.getElementById('sidebar-goal-list').addEventListener('click',(e)=>{ if(e.target.closest('.delete-goal-btn')){ const goalId=String(e.target.closest('.delete-goal-btn').dataset.goalId); openConfirmModal('Delete Practice?','This will remove the practice and any of its tasks for today. This cannot be undone.',()=>{state.goals=state.goals.filter(g=>String(g.id)!==goalId); state.dailyActions=state.dailyActions.filter(t=>String(t.goalId)!==goalId); showMessage('Practice removed.','info'); saveState();}); }});
+    document.getElementById('add-karma-btn').addEventListener('click',openAddKarmaModal);
+    document.getElementById('add-karma-form').addEventListener('submit',handleAddKarma);
+    document.getElementById('cancel-add-karma-btn').addEventListener('click',()=>document.getElementById('add-karma-modal').classList.add('hidden'));
+    document.getElementById('task-list').addEventListener('click',handleTaskClick);
+    document.getElementById('reset-day-btn').addEventListener('click',endDay);
+    document.getElementById('reset-karma-btn').addEventListener('click',handleResetKarma);
+    document.getElementById('sidebar-badge-container').addEventListener('click',e=>{
       const el=e.target.closest('.badge'); if(!el) return;
       const b=badges.find(x=>x.name===el.dataset.badgeName); if(!b) return;
       if(el.classList.contains('unlocked')) showBadgeUnlockModal(b); else showBadgeInfoModal(b);
     });
     document.getElementById('add-custom-prayashchit-btn').addEventListener('click',addCustomPrayashchit);
     document.getElementById('quick-log-vikarma-btn').addEventListener('click',quickLogVikarma);
-    dom.confirmModalCancelBtn.addEventListener('click',()=>document.getElementById('confirm-modal').classList.add('hidden'));
-    dom.confirmModalConfirmBtn.addEventListener('click',()=>{ if(typeof confirmAction==='function'){confirmAction();} document.getElementById('confirm-modal').classList.add('hidden'); });
     document.addEventListener('click',e=>{ if(e.target.id==='badge-modal') document.getElementById('badge-modal').classList.add('hidden'); });
-    dom.themeToggleBtn.addEventListener('click',()=>setTheme(!document.documentElement.classList.contains('dark')));
+    document.getElementById('theme-toggle-btn').addEventListener('click',()=>setTheme(!document.documentElement.classList.contains('dark')));
+
+    function addGoal(){
+      const name=document.getElementById('goal-name-input').value.trim();
+      if(!name){showMessage("Practice name cannot be empty.","error");return;}
+      state.goals.push({id:makeId(),name,satatya:0,totalPracticeKarma:0,hadTasksToday:false,completedOneToday:false});
+      document.getElementById('goal-name-input').value=''; saveState();
+    }
+    function openAddKarmaModal(){
+      if(state.goals.length===0){showMessage("Please create a Practice first.","error");return;}
+      document.getElementById('karma-goal-select').innerHTML=state.goals.map(g=>`<option value="${String(g.id)}">${esc(g.name)}</option>`).join('');
+      document.getElementById('add-karma-form').reset();
+      document.getElementById('add-karma-modal').classList.remove('hidden');
+    }
+    function handleAddKarma(e){
+      e.preventDefault();
+      const goalId=String(document.getElementById('karma-goal-select').value);
+      const name=document.getElementById('add-karma-form').querySelector('#karma-name').value.trim();
+      const type=document.getElementById('add-karma-form').querySelector('#karma-type').value;
+      const remindAt=document.getElementById('add-karma-form').querySelector('#karma-remind-at')?.value||null;
+      const deadlineAt=document.getElementById('add-karma-form').querySelector('#karma-deadline-at')?.value||null;
+      if(!name){showMessage("Action name is required.","error");return;}
+      const goal=state.goals.find(g=>String(g.id)===goalId);
+      if(goal&&type==='karma'){goal.hadTasksToday=true;}
+      state.dailyActions.push({id:makeId(),name,type,goalId,order:state.dailyActions.length,remindAt,deadlineAt});
+      document.getElementById('add-karma-modal').classList.add('hidden'); saveState();
+    }
+    function toggleSidebar(show){ if(show){document.getElementById('sidebar').classList.remove('-translate-x-full');document.getElementById('sidebar-overlay').classList.remove('hidden');} else {document.getElementById('sidebar').classList.add('-translate-x-full');document.getElementById('sidebar-overlay').classList.add('hidden');} }
+    function handleResetKarma(){
+      openConfirmModal('Reset All Karma?','This will reset your Total Karma and all Practice Karma scores to zero. This cannot be undone.',()=>{
+        state.totalKarma=0; state.goals.forEach(g=>g.totalPracticeKarma=0); showMessage('Your accumulated Karma has been reset.','info'); saveState();
+      });
+    }
   </script>
 
   <!-- PWA Service Worker and Install Prompt -->
