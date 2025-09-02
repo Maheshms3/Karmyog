@@ -1,306 +1,315 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Karmyog - Your Path of Abhyāsa</title>
-  <link rel="canonical" href="https://karmyog.life/" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karmyog - Your Path of Abhyāsa</title>
+  <link rel="canonical" href="https://karmyog.life/" />
 
-    <meta name="theme-color" content="#1e293b" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icons/icon-192x192.png" />
+  <!-- PWA -->
+  <meta name="theme-color" content="#1e293b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png" />
 
-    <script src="https://cdn.tailwindcss.com"></script>
-  <script> tailwind.config = { darkMode: 'class' }; </script>
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script> tailwind.config = { darkMode: 'class' }; </script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Fonts / Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-  <style>
-    body { font-family: 'Inter', sans-serif; user-select: none; overflow-x: hidden; }
-    .karma-item { transition: opacity 0.5s ease, transform 0.5s ease; position: relative; }
-    .karma-item.completed { opacity: 0; transform: scale(0.5) translateX(100%); }
-    .fire-overlay { position: absolute; inset: 0; background: rgba(255, 165, 0, 0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 0.75rem; }
-    .karma-positive { color: #22c55e; }
-    .karma-negative { color: #ef4444; }
-    .karma-neutral { color: #64748b; }
-    .badge { transition: transform 0.3s ease, filter 0.3s ease; }
-    .badge.unlocked { filter: none; }
-    .badge.locked { filter: grayscale(100%) opacity(0.4); }
-    .badge:hover { transform: scale(1.1); }
-    #sidebar { transition: transform 0.3s ease-in-out; }
-    #sidebar-overlay { transition: opacity 0.3s ease-in-out; }
-    .vikarma-card { background-color: #fef2f2; }
-    .dark .vikarma-card { background-color: rgba(153, 27, 27, 0.2); }
-    .prayashchit-card { background-color: #fffbeb; }
-    .dark .prayashchit-card { background-color: rgba(180, 83, 9, 0.2); }
-    .dragging { opacity: 0.5; cursor: grabbing; }
-    .score-value { transition: color 0.5s ease; }
-    .modal-enter { animation: fadeIn 0.3s ease-out forwards; }
-    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  <style>
+    body { font-family: 'Inter', sans-serif; user-select: none; overflow-x: hidden; }
+    .karma-item { transition: opacity 0.5s ease, transform 0.5s ease; position: relative; }
+    .karma-item.completed { opacity: 0; transform: scale(0.5) translateX(100%); }
+    .fire-overlay { position: absolute; inset: 0; background: rgba(255, 165, 0, 0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 0.75rem; }
+    .karma-positive { color: #22c55e; }
+    .karma-negative { color: #ef4444; }
+    .karma-neutral { color: #64748b; }
+    .badge { transition: transform 0.3s ease, filter 0.3s ease; }
+    .badge.unlocked { filter: none; }
+    .badge.locked { filter: grayscale(100%) opacity(0.4); }
+    .badge:hover { transform: scale(1.1); }
+    #sidebar { transition: transform 0.3s ease-in-out; }
+    #sidebar-overlay { transition: opacity 0.3s ease-in-out; }
+    .vikarma-card { background-color: #fef2f2; }
+    .dark .vikarma-card { background-color: rgba(153, 27, 27, 0.2); }
+    .prayashchit-card { background-color: #fffbeb; }
+    .dark .prayashchit-card { background-color: rgba(180, 83, 9, 0.2); }
+    .dragging { opacity: 0.5; cursor: grabbing; }
+    .score-value { transition: color 0.5s ease; }
+    .modal-enter { animation: fadeIn 0.3s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-    #installBtn {
-      position: fixed; right: 1rem; bottom: 4.5rem; padding: 0.7rem 1rem; border: 0;
-      border-radius: 0.6rem; font: 600 14px/1.2 system-ui, sans-serif;
-      background: #4f46e5; color: #fff; cursor: pointer;
-      display: none; z-index: 100;
-    }
+    #installBtn {
+      position: fixed; right: 1rem; bottom: 4.5rem; padding: 0.7rem 1rem; border: 0;
+      border-radius: 0.6rem; font: 600 14px/1.2 system-ui, sans-serif;
+      background: #4f46e5; color: #fff; cursor: pointer;
+      display: none; z-index: 100;
+    }
 
-    .badge-ceremony-icon { animation: spin-and-glow 1.5s ease-in-out; }
-    @keyframes spin-and-glow {
-      0% { transform: scale(0.5) rotate(0deg); filter: drop-shadow(0 0 0px white); }
-      50% { transform: scale(1.2) rotate(360deg); filter: drop-shadow(0 0 15px white); }
-      100% { transform: scale(1) rotate(360deg); filter: drop-shadow(0 0 5px white); }
-    }
+    .badge-ceremony-icon { animation: spin-and-glow 1.5s ease-in-out; }
+    @keyframes spin-and-glow {
+      0% { transform: scale(0.5) rotate(0deg); filter: drop-shadow(0 0 0px white); }
+      50% { transform: scale(1.2) rotate(360deg); filter: drop-shadow(0 0 15px white); }
+      100% { transform: scale(1) rotate(360deg); filter: drop-shadow(0 0 5px white); }
+    }
 
-    /* Bottom nav spacing */
-    .with-bottom-nav { padding-bottom: 64px; }
-  </style>
+    /* Bottom nav spacing */
+    .with-bottom-nav { padding-bottom: 64px; }
+  </style>
 </head>
 
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
 
-    <div id="auth-overlay" class="fixed inset-0 bg-slate-900 bg-opacity-95 z-50 flex items-center justify-center p-4">
-    <div class="w-full max-w-sm text-center">
-      <h1 class="text-5xl font-bold text-white mb-2">Karmyog</h1>
-      <p class="text-slate-400 mb-8">Sign in to begin your path of Abhyāsa.</p>
-      <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl">
-        <button id="google-signin-btn" class="w-full bg-white hover:bg-slate-200 text-slate-800 font-semibold py-3 px-4 rounded-lg flex items-center justify-center transition-transform transform hover:scale-105" aria-label="Sign in with Google">
-          <img src="https://www.google.com/favicon.ico" alt="Google icon" class="w-6 h-6 mr-3"> Sign in with Google
-        </button>
-        <a href="#" id="google-redirect-fallback" class="hidden mt-4 text-sm text-indigo-400 hover:text-indigo-300">Pop-up blocked? Try alternate sign-in</a>
+  <!-- Login Overlay -->
+  <div id="auth-overlay" class="fixed inset-0 bg-slate-900 bg-opacity-95 z-50 flex items-center justify-center p-4">
+    <div class="w-full max-w-sm text-center">
+      <h1 class="text-5xl font-bold text-white mb-2">Karmyog</h1>
+      <p class="text-slate-400 mb-8">Sign in to begin your path of Abhyāsa.</p>
+      <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl">
+        <button id="google-signin-btn" class="w-full bg-white hover:bg-slate-200 text-slate-800 font-semibold py-3 px-4 rounded-lg flex items-center justify-center transition-transform transform hover:scale-105" aria-label="Sign in with Google">
+          <img src="https://www.google.com/favicon.ico" alt="Google icon" class="w-6 h-6 mr-3"> Sign in with Google
+        </button>
+        <a href="#" id="google-redirect-fallback" class="hidden mt-4 text-sm text-indigo-400 hover:text-indigo-300">Pop-up blocked? Try alternate sign-in</a>
 
-        <div class="my-6 flex items-center"><hr class="w-full border-slate-600"><span class="px-4 text-slate-500 text-sm">OR</span><hr class="w-full border-slate-600"></div>
-        <form id="email-form">
-          <input type="email" id="email-input" placeholder="Email" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-4 border-2 border-transparent focus:border-indigo-500 focus:ring-0" required>
-          <input type="password" id="password-input" placeholder="Password (6+ characters)" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2 border-2 border-transparent focus:border-indigo-500 focus:ring-0" required>
-          <div class="text-right mb-4">
-            <button type="button" id="forgot-password-btn" class="text-xs text-indigo-300 hover:text-indigo-200 underline">Forgot password?</button>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <button type="button" id="email-signin-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg">Sign In</button>
-            <button type="button" id="email-signup-btn" class="w-full bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-lg">Sign Up</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+        <div class="my-6 flex items-center"><hr class="w-full border-slate-600"><span class="px-4 text-slate-500 text-sm">OR</span><hr class="w-full border-slate-600"></div>
+        <form id="email-form">
+          <input type="email" id="email-input" placeholder="Email" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-4 border-2 border-transparent focus:border-indigo-500 focus:ring-0" required>
+          <input type="password" id="password-input" placeholder="Password (6+ characters)" class="w-full bg-slate-700 text-white p-3 rounded-lg mb-2 border-2 border-transparent focus:border-indigo-500 focus:ring-0" required>
+          <div class="text-right mb-4">
+            <button type="button" id="forgot-password-btn" class="text-xs text-indigo-300 hover:text-indigo-200 underline">Forgot password?</button>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" id="email-signin-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg">Sign In</button>
+            <button type="button" id="email-signup-btn" class="w-full bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-lg">Sign Up</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden" aria-hidden="true"></div>
-  <div id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-800 shadow-xl z-40 transform -translate-x-full p-6 flex flex-col" role="dialog" aria-label="Sidebar">
-    <div class="flex-grow overflow-y-auto pr-2">
-      <h2 class="text-2xl font-bold mb-6 text-slate-900 dark:text-white">Your Abhyāsa</h2>
-      <div class="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mb-6">
-        <input type="text" id="goal-name-input" placeholder="New Practice Name..." class="w-full bg-white dark:bg-slate-600 p-2 rounded-md mb-2">
-        <button id="add-goal-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-md">Create Practice</button>
-      </div>
-      <div id="sidebar-goal-list" class="space-y-4"></div>
+  <!-- Sidebar -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden" aria-hidden="true"></div>
+  <div id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-800 shadow-xl z-40 transform -translate-x-full p-6 flex flex-col" role="dialog" aria-label="Sidebar">
+    <div class="flex-grow overflow-y-auto pr-2">
+      <h2 class="text-2xl font-bold mb-6 text-slate-900 dark:text-white">Your Abhyāsa</h2>
+      <div class="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mb-6">
+        <input type="text" id="goal-name-input" placeholder="New Practice Name..." class="w-full bg-white dark:bg-slate-600 p-2 rounded-md mb-2">
+        <button id="add-goal-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-md">Create Practice</button>
+      </div>
+      <div id="sidebar-goal-list" class="space-y-4"></div>
 
-      <div class="mt-8">
-        <h3 class="text-xl font-bold mb-4 text-slate-900 dark:text-white">Badges</h3>
-        <div id="sidebar-badge-container" class="grid grid-cols-4 gap-4 text-center"></div>
-      </div>
+      <div class="mt-8">
+        <h3 class="text-xl font-bold mb-4 text-slate-900 dark:text-white">Badges</h3>
+        <div id="sidebar-badge-container" class="grid grid-cols-4 gap-4 text-center"></div>
+      </div>
 
-            <div class="mt-8 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg">
-        <h3 class="text-xl font-bold mb-3">Reminders</h3>
-        <label class="flex items-center justify-between mb-2">
-          <span class="text-sm">In-app reminders</span>
-          <input id="toggle-inapp-reminders" type="checkbox" class="scale-125">
-        </label>
-        <label class="flex items-center justify-between mb-2">
-          <span class="text-sm">Web push (optional)</span>
-          <input id="toggle-push-reminders" type="checkbox" class="scale-125">
-        </label>
-        <div class="grid grid-cols-2 gap-3 mt-3">
-          <div>
-            <label class="block text-xs mb-1">End Day Time</label>
-            <input id="endday-time" type="time" class="w-full bg-white dark:bg-slate-600 p-2 rounded-md">
-          </div>
-          <div>
-            <label class="block text-xs mb-1">Auto finalize (mins)</label>
-            <input id="auto-finalize-mins" type="number" min="5" step="5" class="w-full bg-white dark:bg-slate-600 p-2 rounded-md">
-          </div>
-        </div>
-      </div>
-    </div>
+      <!-- Reminders & End Day Settings -->
+      <div class="mt-8 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg">
+        <h3 class="text-xl font-bold mb-3">Reminders</h3>
+        <label class="flex items-center justify-between mb-2">
+          <span class="text-sm">In-app reminders</span>
+          <input id="toggle-inapp-reminders" type="checkbox" class="scale-125">
+        </label>
+        <label class="flex items-center justify-between mb-2">
+          <span class="text-sm">Web push (optional)</span>
+          <input id="toggle-push-reminders" type="checkbox" class="scale-125">
+        </label>
+        <div class="grid grid-cols-2 gap-3 mt-3">
+          <div>
+            <label class="block text-xs mb-1">End Day Time</label>
+            <input id="endday-time" type="time" class="w-full bg-white dark:bg-slate-600 p-2 rounded-md">
+          </div>
+          <div>
+            <label class="block text-xs mb-1">Auto finalize (mins)</label>
+            <input id="auto-finalize-mins" type="number" min="5" step="5" class="w-full bg-white dark:bg-slate-600 p-2 rounded-md">
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <div class="mt-auto pt-6 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
-      <button id="reset-karma-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors mb-4">Reset Accumulated Karma</button>
-      <button id="reset-day-btn" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg">End Day &amp; Evaluate</button>
-    </div>
-  </div>
+    <div class="mt-auto pt-6 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
+      <button id="reset-karma-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors mb-4">Reset Accumulated Karma</button>
+      <button id="reset-day-btn" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg">End Day &amp; Evaluate</button>
+    </div>
+  </div>
 
-    <div id="app-container" class="hidden container mx-auto max-w-2xl p-4 sm:p-6 with-bottom-nav">
-    <header class="text-center mb-6 relative flex items-center justify-between">
-      <button id="menu-btn" class="text-2xl text-slate-800 dark:text-slate-200" aria-label="Open menu"><i class="fas fa-bars"></i></button>
-      <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Karmyog</h1>
-      <div class="flex items-center gap-2">
-        <button id="theme-toggle-btn" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold py-2 px-3 rounded-lg" aria-label="Toggle dark mode">Theme</button>
-        <button id="signout-btn" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold py-2 px-4 rounded-lg">Sign Out</button>
-      </div>
-    </header>
+  <!-- Main App Content -->
+  <div id="app-container" class="hidden container mx-auto max-w-2xl p-4 sm:p-6 with-bottom-nav">
+    <header class="text-center mb-6 relative flex items-center justify-between">
+      <button id="menu-btn" class="text-2xl text-slate-800 dark:text-slate-200" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+      <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Karmyog</h1>
+      <div class="flex items-center gap-2">
+        <button id="theme-toggle-btn" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold py-2 px-3 rounded-lg" aria-label="Toggle dark mode">Theme</button>
+        <button id="signout-btn" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold py-2 px-4 rounded-lg">Sign Out</button>
+      </div>
+    </header>
 
-    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-lg mb-6 sticky top-4 z-10 grid grid-cols-2 divide-x dark:divide-slate-700 text-center">
-      <div>
-        <p class="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Today's Karma</p>
-        <p id="daily-karma-score" class="text-4xl font-bold mt-1 score-value">0</p>
-      </div>
-      <div>
-        <p class="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Karma</p>
-        <p id="total-karma-score" class="text-4xl font-bold mt-1 score-value">0</p>
-      </div>
-    </div>
+    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-lg mb-6 sticky top-4 z-10 grid grid-cols-2 divide-x dark:divide-slate-700 text-center">
+      <div>
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Today's Karma</p>
+        <p id="daily-karma-score" class="text-4xl font-bold mt-1 score-value">0</p>
+      </div>
+      <div>
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Karma</p>
+        <p id="total-karma-score" class="text-4xl font-bold mt-1 score-value">0</p>
+      </div>
+    </div>
 
-    <p id="gita-quote" class="text-sm text-center text-slate-500 dark:text-slate-400 mt-3 mb-6 italic max-w-xl mx-auto"></p>
+    <p id="gita-quote" class="text-sm text-center text-slate-500 dark:text-slate-400 mt-3 mb-6 italic max-w-xl mx-auto"></p>
 
-        <div id="view-tasks">
-      <div id="task-list-container" class="min-h-screen">
-        <h2 class="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Today's Actions</h2>
-        <ul id="task-list" class="space-y-4"></ul>
-        <button id="add-karma-btn" class="w-full mt-6 bg-indigo-200 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-300 dark:hover:bg-indigo-900 font-semibold py-3 rounded-lg text-sm">+ Add New Action</button>
-        <button id="quick-log-vikarma-btn" class="w-full mt-2 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900 font-semibold py-3 rounded-lg text-sm">Log Vikarma Now</button>
-      </div>
-    </div>
+    <!-- Tabs: Tasks / Diary -->
+    <div id="view-tasks">
+      <div id="task-list-container" class="min-h-screen">
+        <h2 class="text-2xl font-bold mb-4 text-slate-900 dark:text-white">Today's Actions</h2>
+        <ul id="task-list" class="space-y-4"></ul>
+        <button id="add-karma-btn" class="w-full mt-6 bg-indigo-200 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-300 dark:hover:bg-indigo-900 font-semibold py-3 rounded-lg text-sm">+ Add New Action</button>
+        <button id="quick-log-vikarma-btn" class="w-full mt-2 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900 font-semibold py-3 rounded-lg text-sm">Log Vikarma Now</button>
+      </div>
+    </div>
 
-    <div id="view-diary" class="hidden">
-      <h2 class="text-2xl font-bold mb-4">Daily Diary</h2>
-      <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow mb-4">
-        <input id="note-title" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg mb-3" placeholder="Title (optional)">
-        <textarea id="note-body" rows="5" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg mb-3" placeholder="Write your note..."></textarea>
-        <div class="flex items-center gap-3">
-          <button id="btn-dictate" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-microphone"></i> Dictate</button>
-          <button id="btn-record" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-microphone-lines"></i> Record</button>
-          <button id="btn-save-note" class="ml-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg">Save Note</button>
-        </div>
-      </div>
-      <div id="notes-list" class="space-y-3"></div>
-    </div>
-  </div>
+    <div id="view-diary" class="hidden">
+      <h2 class="text-2xl font-bold mb-4">Daily Diary</h2>
+      <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow mb-4">
+        <input id="note-title" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg mb-3" placeholder="Title (optional)">
+        <textarea id="note-body" rows="5" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg mb-3" placeholder="Write your note..."></textarea>
+        <div class="flex items-center gap-3">
+          <button id="btn-dictate" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-microphone"></i> Dictate</button>
+          <button id="btn-record" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg"><i class="fas fa-microphone-lines"></i> Record</button>
+          <button id="btn-save-note" class="ml-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg">Save Note</button>
+        </div>
+      </div>
+      <div id="notes-list" class="space-y-3"></div>
+    </div>
+  </div>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t dark:border-slate-700 z-40">
-    <div class="max-w-2xl mx-auto grid grid-cols-3 text-center">
-      <button id="tab-tasks" class="py-3 font-semibold">Tasks</button>
-      <button id="tab-diary" class="py-3">Diary</button>
-      <button id="tab-profile" class="py-3">Profile</button>
-    </div>
-  </nav>
+  <!-- Bottom Nav -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t dark:border-slate-700 z-40">
+    <div class="max-w-2xl mx-auto grid grid-cols-3 text-center">
+      <button id="tab-tasks" class="py-3 font-semibold">Tasks</button>
+      <button id="tab-diary" class="py-3">Diary</button>
+      <button id="tab-profile" class="py-3">Profile</button>
+    </div>
+  </nav>
 
-    <div id="add-karma-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Add New Action">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full modal-enter">
-      <h2 class="text-2xl font-bold mb-4">Add New Action</h2>
-      <form id="add-karma-form">
-        <div class="mb-4">
-          <label for="karma-goal-select" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Assign to Practice (Abhyāsa)</label>
-          <select id="karma-goal-select" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg" required></select>
-        </div>
-        <input type="text" id="karma-name" placeholder="Action name..." class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg mb-4" required>
-        <select id="karma-type" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg mb-4">
-          <option value="karma">Karma (Positive Action)</option>
-          <option value="vikarma">Vikarma (Negative Action)</option>
-        </select>
+  <!-- Modals -->
+  <div id="add-karma-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Add New Action">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full modal-enter">
+      <h2 class="text-2xl font-bold mb-4">Add New Action</h2>
+      <form id="add-karma-form">
+        <div class="mb-4">
+          <label for="karma-goal-select" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Assign to Practice (Abhyāsa)</label>
+          <select id="karma-goal-select" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg" required></select>
+        </div>
+        <input type="text" id="karma-name" placeholder="Action name..." class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg mb-4" required>
+        <select id="karma-type" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg mb-4">
+          <option value="karma">Karma (Positive Action)</option>
+          <option value="vikarma">Vikarma (Negative Action)</option>
+        </select>
 
-                <div class="grid grid-cols-2 gap-3 mb-6">
-          <div>
-            <label class="block text-sm mb-1">Reminder Time</label>
-            <input id="karma-remind-at" type="time" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg">
-          </div>
-          <div>
-            <label class="block text-sm mb-1">Deadline</label>
-            <input id="karma-deadline-at" type="time" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg">
-          </div>
-        </div>
+        <!-- Reminder & Deadline -->
+        <div class="grid grid-cols-2 gap-3 mb-6">
+          <div>
+            <label class="block text-sm mb-1">Reminder Time</label>
+            <input id="karma-remind-at" type="time" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg">
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Deadline</label>
+            <input id="karma-deadline-at" type="time" class="w-full bg-slate-100 dark:bg-slate-700 p-3 rounded-lg">
+          </div>
+        </div>
 
-        <div class="flex justify-end space-x-3">
-          <button type="button" id="cancel-add-karma-btn" class="bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
-          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">Add Action</button>
-        </div>
-      </form>
-    </div>
-  </div>
+        <div class="flex justify-end space-x-3">
+          <button type="button" id="cancel-add-karma-btn" class="bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">Add Action</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-  <div id="prayashchit-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Prayashchit">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center modal-enter">
-      <i class="fas fa-person-praying text-5xl text-amber-600 mb-4" aria-hidden="true"></i>
-      <h2 class="text-3xl font-bold">Prayashchit (Penance)</h2>
-      <p class="mt-2 mb-6">Your daily Karma is negative. Choose a penance to restore balance for tomorrow:</p>
-      <div id="prayashchit-options" class="space-y-3 text-left mb-6"></div>
-      <div class="mt-4 pt-4 border-t dark:border-slate-700">
-        <input type="text" id="custom-prayashchit-input" placeholder="Or add your own..." class="w-full bg-slate-100 dark:bg-slate-700 p-2 rounded-md mb-2">
-        <button id="add-custom-prayashchit-btn" class="w-full bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2 rounded-md text-sm">Add Custom Penance</button>
-      </div>
-      <button id="accept-prayashchit-btn" class="w-full mt-4 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg">Accept &amp; End Day</button>
-    </div>
-  </div>
+  <div id="prayashchit-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Prayashchit">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center modal-enter">
+      <i class="fas fa-person-praying text-5xl text-amber-600 mb-4" aria-hidden="true"></i>
+      <h2 class="text-3xl font-bold">Prayashchit (Penance)</h2>
+      <p class="mt-2 mb-6">Your daily Karma is negative. Choose a penance to restore balance for tomorrow:</p>
+      <div id="prayashchit-options" class="space-y-3 text-left mb-6"></div>
+      <div class="mt-4 pt-4 border-t dark:border-slate-700">
+        <input type="text" id="custom-prayashchit-input" placeholder="Or add your own..." class="w-full bg-slate-100 dark:bg-slate-700 p-2 rounded-md mb-2">
+        <button id="add-custom-prayashchit-btn" class="w-full bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2 rounded-md text-sm">Add Custom Penance</button>
+      </div>
+      <button id="accept-prayashchit-btn" class="w-full mt-4 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg">Accept &amp; End Day</button>
+    </div>
+  </div>
 
-  <div id="badge-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Badge">
-    <div id="badge-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center modal-enter"></div>
-  </div>
+  <div id="badge-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Badge">
+    <div id="badge-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center modal-enter"></div>
+  </div>
 
-  <div id="summary-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Daily Summary">
-    <div id="summary-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center modal-enter"></div>
-    <div id="summary-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center modal-enter"></div>
-  </div>
+  <div id="summary-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Daily Summary">
+    <div id="summary-modal-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center modal-enter"></div>
+  </div>
 
-  <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Confirmation">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center modal-enter">
-      <h2 id="confirm-modal-title" class="text-2xl font-bold mb-4">Are you sure?</h2>
-      <p id="confirm-modal-text" class="text-slate-500 dark:text-slate-400 mb-6">This action cannot be undone.</p>
-      <div class="flex justify-center space-x-4">
-        <button id="confirm-modal-cancel-btn" class="bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-6 rounded-lg">Cancel</button>
-        <button id="confirm-modal-confirm-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg">Delete</button>
-      </div>
-    </div>
-  </div>
+  <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-label="Confirmation">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center modal-enter">
+      <h2 id="confirm-modal-title" class="text-2xl font-bold mb-4">Are you sure?</h2>
+      <p id="confirm-modal-text" class="text-slate-500 dark:text-slate-400 mb-6">This action cannot be undone.</p>
+      <div class="flex justify-center space-x-4">
+        <button id="confirm-modal-cancel-btn" class="bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-6 rounded-lg">Cancel</button>
+        <button id="confirm-modal-confirm-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg">Delete</button>
+      </div>
+    </div>
+  </div>
 
-  <div id="message-box" class="hidden fixed bottom-16 right-5 p-4 text-sm rounded-lg shadow-lg z-50" role="alert"></div>
-  <button id="installBtn" type="button">Install Karmyog</button>
-  <audio id="fire-sound" src="https://cdn.freesound.org/previews/25/25431_132334-lq.mp3" preload="auto"></audio>
+  <div id="message-box" class="hidden fixed bottom-16 right-5 p-4 text-sm rounded-lg shadow-lg z-50" role="alert"></div>
+  <button id="installBtn" type="button">Install Karmyog</button>
+  <audio id="fire-sound" src="https://cdn.freesound.org/previews/25/25431_132334-lq.mp3" preload="auto"></audio>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-storage-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-messaging-compat.js"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-messaging-compat.js"></script>
 
-  <script>
-    // ---- Security: escape helper ----
-    function esc(s) {
-      return String(s)
-        .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;").replace(/"/g,"&quot;")
-        .replace(/'/g,"&#39;");
-    }
-    // ---- Local date helper (YYYY-MM-DD in user TZ) ----
-    function localDateISO(d = new Date()) {
-      // en-CA gives YYYY-MM-DD in most browsers
-      return d.toLocaleDateString('en-CA');
-    }
+  <script>
+    // ---- Security: escape helper ----
+    function esc(s) {
+      return String(s)
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;").replace(/"/g,"&quot;")
+        .replace(/'/g,"&#39;");
+    }
+    // ---- Local date helper (YYYY-MM-DD in user TZ) ----
+    function localDateISO(d = new Date()) {
+      // en-CA gives YYYY-MM-DD in most browsers
+      return d.toLocaleDateString('en-CA');
+    }
 
-    // ---- Theme ----
-    function setTheme(dark) {
-      document.documentElement.classList.toggle('dark', dark);
-      const meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute('content', dark ? '#0f172a' : '#f1f5f9');
-      try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(e){}
-    }
-    (function initTheme(){
-      const saved = (() => { try { return localStorage.getItem('theme'); } catch(e){ return null; }})();
-      setTheme(saved ? saved === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches));
-    })();
- 
-    // This section is now a placeholder.
-    // Netlify's build process will replace these placeholders with the actual values.
-    // The keys will be added to Netlify's Environment Variables panel.
+    // ---- Theme ----
+    function setTheme(dark) {
+      document.documentElement.classList.toggle('dark', dark);
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', dark ? '#0f172a' : '#f1f5f9');
+      try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(e){}
+    }
+    (function initTheme(){
+      const saved = (() => { try { return localStorage.getItem('theme'); } catch(e){ return null; }})();
+      setTheme(saved ? saved === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches));
+    })();
+
     const firebaseConfig = {
-      apiKey: '%%FIREBASE_API_KEY%%',
-      authDomain: '%%FIREBASE_AUTH_DOMAIN%%',
-      projectId: '%%FIREBASE_PROJECT_ID%%',
-      storageBucket: '%%FIREBASE_STORAGE_BUCKET%%',
-      messagingSenderId: '%%FIREBASE_MESSAGING_SENDER_ID%%',
-      appId: '%%FIREBASE_APP_ID%%',
-      measurementId: '%%FIREBASE_MEASUREMENT_ID%%'
-    };
+  apiKey: '%%FIREBASE_API_KEY%%',
+  authDomain: '%%FIREBASE_AUTH_DOMAIN%%',
+  projectId: '%%FIREBASE_PROJECT_ID%%',
+  storageBucket: '%%FIREBASE_STORAGE_BUCKET%%',
+  messagingSenderId: '%%FIREBASE_MESSAGING_SENDER_ID%%',
+  appId: '%%FIREBASE_APP_ID%%',
+  measurementId: '%%FIREBASE_MEASUREMENT_ID%%'
+};
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -308,1161 +317,1162 @@
     const storage = firebase.storage();
     let messaging = null; // used only if push is enabled
 
-    // --- DOM ---
-    const dom = {
-      authOverlay: document.getElementById('auth-overlay'),
-      appContainer: document.getElementById('app-container'),
-      googleSigninBtn: document.getElementById('google-signin-btn'),
-      googleRedirectFallback: document.getElementById('google-redirect-fallback'),
-      emailSigninBtn: document.getElementById('email-signin-btn'),
-      emailSignupBtn: document.getElementById('email-signup-btn'),
-      forgotPasswordBtn: document.getElementById('forgot-password-btn'),
-      emailInput: document.getElementById('email-input'),
-      passwordInput: document.getElementById('password-input'),
-      signoutBtn: document.getElementById('signout-btn'),
-      themeToggleBtn: document.getElementById('theme-toggle-btn'),
-      dailyKarmaScoreEl: document.getElementById('daily-karma-score'),
-      totalKarmaScoreEl: document.getElementById('total-karma-score'),
-      gitaQuoteEl: document.getElementById('gita-quote'),
-      taskList: document.getElementById('task-list'),
-      resetDayBtn: document.getElementById('reset-day-btn'),
-      resetKarmaBtn: document.getElementById('reset-karma-btn'),
-      sidebar: document.getElementById('sidebar'),
-      sidebarOverlay: document.getElementById('sidebar-overlay'),
-      menuBtn: document.getElementById('menu-btn'),
-      sidebarGoalList: document.getElementById('sidebar-goal-list'),
-      sidebarBadgeContainer: document.getElementById('sidebar-badge-container'),
-      addGoalBtn: document.getElementById('add-goal-btn'),
-      goalNameInput: document.getElementById('goal-name-input'),
-      addKarmaModal: document.getElementById('add-karma-modal'),
-      addKarmaForm: document.getElementById('add-karma-form'),
-      cancelAddKarmaBtn: document.getElementById('cancel-add-karma-btn'),
-      addKarmaBtn: document.getElementById('add-karma-btn'),
-      karmaGoalSelect: document.getElementById('karma-goal-select'),
-      prayashchitModal: document.getElementById('prayashchit-modal'),
-      prayashchitOptionsEl: document.getElementById('prayashchit-options'),
-      acceptPrayashchitBtn: document.getElementById('accept-prayashchit-btn'),
-      customPrayashchitInput: document.getElementById('custom-prayashchit-input'),
-      addCustomPrayashchitBtn: document.getElementById('add-custom-prayashchit-btn'),
-      fireSound: document.getElementById('fire-sound'),
-      badgeModal: document.getElementById('badge-modal'),
-      badgeModalContent: document.getElementById('badge-modal-content'),
-      summaryModal: document.getElementById('summary-modal'),
-      summaryModalContent: document.getElementById('summary-modal-content'),
-      confirmModal: document.getElementById('confirm-modal'),
-      confirmModalTitle: document.getElementById('confirm-modal-title'),
-      confirmModalText: document.getElementById('confirm-modal-text'),
-      confirmModalCancelBtn: document.getElementById('confirm-modal-cancel-btn'),
-      confirmModalConfirmBtn: document.getElementById('confirm-modal-confirm-btn'),
-      // settings
-      remindersToggle: document.getElementById('toggle-inapp-reminders'),
-      pushToggle: document.getElementById('toggle-push-reminders'),
-      endDayTimeInput: document.getElementById('endday-time'),
-      autoFinalizeInput: document.getElementById('auto-finalize-mins'),
-      // Diary
-      noteTitle: document.getElementById('note-title'),
-      noteBody: document.getElementById('note-body'),
-      btnDictate: document.getElementById('btn-dictate'),
-      btnRecord: document.getElementById('btn-record'),
-      btnSaveNote: document.getElementById('btn-save-note'),
-      notesList: document.getElementById('notes-list'),
-      // Tabs
-      viewTasks: document.getElementById('view-tasks'),
-      viewDiary: document.getElementById('view-diary'),
-      tabTasks: document.getElementById('tab-tasks'),
-      tabDiary: document.getElementById('tab-diary')
-    };
-
-    // --- Helpers ---
-    const makeId = () => (crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
-
-    // --- App State ---
-    let state = {};
-    let unsubscribe;
-    let pendingFinalDailyKarma = null;
-    let confirmAction = null;
-    let notesUnsub = null;
-
-    const defaultState = {
-      totalKarma: 0,
-      dailyKarma: 0,
-      goals: [],
-      unlockedBadges: [],
-      dailyActions: [],
-      customPrayashchits: [],
-      settings: {
-        endDayTime: "22:30",
-        autoFinalizeAfterMins: 30,
-        remindersEnabled: true,
-        pushRemindersEnabled: false
-      },
-      lastFinalizedDate: null,
-      metrics: { completedPositiveToday: 0, loggedNegativeToday: 0 } // NEW
-    };
-
-    const badges = [
-      { days: 9, name: 'Arjuna', icon: 'fa-user-graduate', color: 'text-slate-500', meaning: 'The focused warrior, beginning the path.' },
-      { days: 18, name: 'Sthitaprajña', icon: 'fa-brain', color: 'text-sky-500', meaning: 'One of steady wisdom, undisturbed by dualities.' },
-      { days: 27, name: 'Yuktah', icon: 'fa-link', color: 'text-blue-500', meaning: 'One who is linked in yoga, harmonious.' },
-      { days: 36, name: 'Niyatam', icon: 'fa-calendar-check', color: 'text-indigo-500', meaning: 'One who performs prescribed duties consistently.' },
-      { days: 45, name: 'Akartā', icon: 'fa-hand-paper', color: 'text-purple-500', meaning: 'The non-doer, realizing the self is not the agent.' },
-      { days: 54, name: 'Tyāgī', icon: 'fa-leaf', color: 'text-emerald-500', meaning: 'The renouncer of the fruits of action.' },
-      { days: 63, name: 'Samatvam', icon: 'fa-scale-balanced', color: 'text-lime-500', meaning: 'One who maintains equanimity in success and failure.' },
-      { days: 72, name: 'Bhakta', icon: 'fa-heart', color: 'text-rose-500', meaning: 'A devoted soul, connected with love.' },
-      { days: 81, name: 'Jñānī', icon: 'fa-book-open', color: 'text-amber-500', meaning: 'One who possesses true knowledge.' },
-      { days: 90, name: 'Yogī', icon: 'fa-star', color: 'text-orange-500', meaning: 'A master of the self, united with the divine.' },
-      { days: 99, name: 'Brahmabhūta', icon: 'fa-star-of-life', color: 'text-yellow-400', meaning: 'One who has attained the Brahman platform.' },
-      { days: 108, name: 'Ātmarāma', icon: 'fa-sun', color: 'text-yellow-300', meaning: 'One who rejoices in the Self.' }
-    ];
-
-    const gitaQuotes = [
-      "You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions. - 2.47",
-      "Perform your obligatory duty, because action is indeed better than inaction. - 3.8",
-      "The wise see inaction in action and action in inaction. - 4.18",
-      "One who performs their duty without attachment, surrendering the results to the Supreme Lord, is unaffected by sinful action. - 5.10",
-      "It is better to live your own destiny imperfectly than to live an imitation of somebody else's life with perfection. - 3.35"
-    ];
-    const prayashchitList = [ "Take a cold water bath", "Avoid all sugar for 24 hours", "Use stairs instead of the lift", "30 minutes of selfless service (seva)", "Maintain silence for 2 hours" ];
-
-    // --- Auth & State ---
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        dom.authOverlay.classList.add('hidden');
-        dom.appContainer.classList.remove('hidden');
-        loadState(user.uid);
-        watchNotes();
-      } else {
-        dom.authOverlay.classList.remove('hidden');
-        dom.appContainer.classList.add('hidden');
-        if (unsubscribe) unsubscribe();
-        if (notesUnsub) notesUnsub();
-        state = {};
-      }
-    });
-
-    auth.getRedirectResult()
-      .then((result) => { if (result.user) { showMessage(`Welcome, ${result.user.displayName || 'friend'}!`, 'success'); } })
-      .catch((error) => { if (error.code !== 'auth/no-auth-event') { showMessage(error.message, 'error'); } });
-
-    function loadState(userId) {
-      const docRef = db.collection('users').doc(userId);
-      unsubscribe = docRef.onSnapshot(doc => {
-        state = doc.exists ? doc.data() : JSON.parse(JSON.stringify(defaultState));
-        if (!state.dailyActions) state.dailyActions = [];
-        if (!state.goals) state.goals = [];
-        if (!state.customPrayashchits) state.customPrayashchits = [];
-        if (!state.settings) state.settings = JSON.parse(JSON.stringify(defaultState.settings));
-        if (!state.metrics) state.metrics = { completedPositiveToday: 0, loggedNegativeToday: 0 }; // ensure metrics exist
-
-        state.goals.forEach(g => {
-          if (g.totalPracticeKarma === undefined) g.totalPracticeKarma = 0;
-          if (g.completedOneToday === undefined) g.completedOneToday = false;
-          if (g.hadTasksToday === undefined) g.hadTasksToday = false;
-        });
-        if (!doc.exists) saveState();
-        renderAll();
-        maybeFinalizeMissedDay();
-        scheduleForegroundReminders();
-        maybeShowQueuedSummary(); // show any queued summary immediately
-      });
-    }
-
-    function saveState() {
-      if (auth.currentUser) {
-        db.collection('users').doc(auth.currentUser.uid).set(state, { merge: true })
-          .catch(error => console.error("Error saving state: ", error));
-      }
-    }
-
-    // --- Rendering ---
-    function renderAll() {
-      if (!state.goals) return;
-      renderSidebar();
-      renderTaskList();
-      updateStats();
-      initSettingsUI();
-      showGitaQuoteOnce();
-    }
-
-    function renderSidebar() {
-      dom.sidebarGoalList.innerHTML = '';
-      if (state.goals.length > 0) {
-        state.goals.forEach(goal => {
-          const goalIdStr = String(goal.id);
-          dom.sidebarGoalList.innerHTML += `
-            <div class="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg">
-              <span class="font-semibold">${esc(goal.name)}</span>
-              <div class="text-right flex-shrink-0 ml-2">
-                <p class="font-bold text-sm">Sātatya: ${goal.satatya || 0}</p>
-                <p class="text-xs text-slate-400">Karma: ${goal.totalPracticeKarma || 0}</p>
-              </div>
-              <button class="delete-goal-btn text-slate-400 hover:text-red-500 ml-2" data-goal-id="${goalIdStr}" aria-label="Delete practice"><i class="fas fa-trash"></i></button>
-            </div>`;
-        });
-      } else {
-        dom.sidebarGoalList.innerHTML = `<p class="text-sm text-slate-500 italic">Create your first practice above.</p>`;
-      }
-      renderBadges();
-    }
-
-    function renderTaskList() {
-      dom.taskList.innerHTML = '';
-      if (state.dailyActions.length === 0) {
-        dom.taskList.innerHTML = `<p class="text-center text-slate-500 italic py-8">A fresh start. Add your actions for today.</p>`;
-        return;
-      }
-      state.dailyActions.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(task => {
-        const li = document.createElement('li');
-        li.className = 'karma-item bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md';
-        li.dataset.id = String(task.id);
-        li.draggable = true;
-
-        const goal = state.goals.find(g => String(g.id) === String(task.goalId));
-        const goalName = goal ? goal.name : 'Penance';
-        const deleteBtnHTML = `<button class="delete-task-btn text-slate-400 hover:text-red-500 text-xs ml-2" aria-label="Delete action"><i class="fas fa-times"></i></button>`;
-
-        const safeName = esc(task.name);
-        const safeGoalName = esc(goalName);
-        const timing = (task.remindAt || task.deadlineAt)
-          ? `<div class="text-[11px] text-slate-400 mt-1">${task.remindAt ? `🔔 ${task.remindAt}` : ''} ${task.deadlineAt ? `• ⏰ ${task.deadlineAt}` : ''}</div>`
-          : '';
-
-        if (task.type === 'prayashchit') {
-          li.classList.add('prayashchit-card');
-          li.innerHTML = `<div class="flex items-center"><i class="fas fa-person-praying text-amber-500 mr-4" aria-hidden="true"></i><div><p class="font-semibold text-lg">${safeName}</p><p class="text-xs text-slate-400">Prayashchit (from yesterday)</p>${timing}</div></div>`;
-        } else if (task.type === 'karma') {
-          li.innerHTML = `<div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <i class="fas fa-leaf text-green-500 mr-4" aria-hidden="true"></i>
-              <div><p class="font-semibold text-lg">${safeName}</p><p class="text-xs text-slate-400">${safeGoalName}</p>${timing}</div>
-            </div>
-            <div class="flex items-center"><span class="font-bold text-green-500 mx-2">+1</span>${deleteBtnHTML}</div></div>`;
-        } else {
-          li.classList.add('vikarma-card');
-          li.innerHTML = `<div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <i class="fas fa-leaf text-slate-400 mr-4" aria-hidden="true"></i>
-              <div><p class="font-semibold text-lg">${safeName}</p><p class="text-xs text-slate-400">${safeGoalName}</p></div>
-            </div>
-            <div class="flex items-center"><span class="font-bold text-red-500">-1</span><button class="log-vikarma-btn text-xs bg-red-500 text-white px-3 py-1 rounded-md mx-2" aria-label="Log negative action">Log</button>${deleteBtnHTML}</div></div>`;
-        }
-        dom.taskList.appendChild(li);
-      });
-    }
-
-    function renderBadges() {
-      dom.sidebarBadgeContainer.innerHTML = '';
-      badges.forEach(badge => {
-        const isUnlocked = Array.isArray(state.unlockedBadges) && state.unlockedBadges.includes(badge.name);
-        const badgeEl = document.createElement('div');
-        badgeEl.className = `badge p-2 rounded-lg cursor-pointer ${isUnlocked ? 'unlocked' : 'locked'}`;
-        badgeEl.title = isUnlocked ? `${badge.name} - Unlocked!` : `${badge.name} - Locked`;
-        badgeEl.dataset.badgeName = badge.name;
-        badgeEl.innerHTML = `<i class="fas ${badge.icon} text-3xl ${isUnlocked ? badge.color : 'text-slate-400'}" aria-hidden="true"></i>`;
-        dom.sidebarBadgeContainer.appendChild(badgeEl);
-      });
-    }
-
-    function updateStats() {
-      animateValue(dom.dailyKarmaScoreEl, state.dailyKarma || 0);
-      animateValue(dom.totalKarmaScoreEl, state.totalKarma || 0);
-      [dom.dailyKarmaScoreEl, dom.totalKarmaScoreEl].forEach(el => {
-        const value = parseInt(el.textContent) || 0;
-        el.classList.remove('karma-positive', 'karma-negative', 'karma-neutral');
-        if (value > 0) el.classList.add('karma-positive');
-        else if (value < 0) el.classList.add('karma-negative');
-        else el.classList.add('karma-neutral');
-      });
-    }
-
-    // --- Core Logic + hooks ---
-    function addGoal() {
-      const name = dom.goalNameInput.value.trim();
-      if (!name) { showMessage("Practice name cannot be empty.", "error"); return; }
-      state.goals.push({ id: makeId(), name, satatya: 0, totalPracticeKarma: 0, hadTasksToday: false, completedOneToday: false });
-      dom.goalNameInput.value = '';
-      saveState();
-    }
-
-    function openAddKarmaModal() {
-      if (state.goals.length === 0) { showMessage("Please create a Practice first.", "error"); return; }
-      dom.karmaGoalSelect.innerHTML = state.goals.map(g => `<option value="${String(g.id)}">${esc(g.name)}</option>`).join('');
-      dom.addKarmaForm.reset();
-      dom.addKarmaModal.classList.remove('hidden');
-    }
-
-    function handleAddKarma(e) {
-      e.preventDefault();
-      const goalId = String(dom.karmaGoalSelect.value);
-      const name = dom.addKarmaForm.querySelector('#karma-name').value.trim();
-      const type = dom.addKarmaForm.querySelector('#karma-type').value;
-      const remindAt = dom.addKarmaForm.querySelector('#karma-remind-at')?.value || null;
-      const deadlineAt = dom.addKarmaForm.querySelector('#karma-deadline-at')?.value || null;
-      if (!name) { showMessage("Action name is required.", "error"); return; }
-
-      const goal = state.goals.find(g => String(g.id) === goalId);
-      if (goal && type === 'karma') { goal.hadTasksToday = true; }
-
-      state.dailyActions.push({ id: makeId(), name, type, goalId, order: state.dailyActions.length, remindAt, deadlineAt });
-      dom.addKarmaModal.classList.add('hidden');
-      saveState();
-    }
-
-    function handleTaskClick(e) {
-      const fireOverlay = e.target.closest('.fire-overlay');
-      const logVikarmaBtn = e.target.closest('.log-vikarma-btn');
-      const deleteBtn = e.target.closest('.delete-task-btn');
-
-      if (fireOverlay) { handleKarmaCompletion(e); return; }
-      if (logVikarmaBtn) { handleVikarmaLog(e); return; }
-      if (deleteBtn) { handleDeleteTask(e); return; }
-
-      const karmaItem = e.target.closest('.karma-item');
-      if (!karmaItem) return;
-      const task = state.dailyActions.find(t => String(t.id) === String(karmaItem.dataset.id));
-      if (!task || task.type === 'vikarma' || task.type === 'prayashchit') return;
-
-      document.querySelectorAll('.fire-overlay').forEach(el => { if (el.parentElement !== karmaItem) el.remove(); });
-
-      if (karmaItem.querySelector('.fire-overlay')) {
-        karmaItem.querySelector('.fire-overlay').remove();
-      } else {
-        const newFireOverlay = document.createElement('div');
-        newFireOverlay.className = 'fire-overlay';
-        newFireOverlay.innerHTML = `<i class="fas fa-fire text-orange-500 text-4xl" aria-hidden="true"></i>`;
-        karmaItem.appendChild(newFireOverlay);
-      }
-    }
-
-    function handleKarmaCompletion(e) {
-      const karmaItem = e.target.closest('.karma-item'); if (!karmaItem) return;
-      const taskId = String(karmaItem.dataset.id);
-      const taskIndex = state.dailyActions.findIndex(t => String(t.id) === taskId);
-      if (taskIndex === -1) return;
-
-      const task = state.dailyActions[taskIndex];
-      const goal = state.goals.find(g => String(g.id) === String(task.goalId));
-
-      state.dailyKarma = (state.dailyKarma || 0) + 1;
-      state.metrics.completedPositiveToday = (state.metrics.completedPositiveToday || 0) + 1; // NEW
-      if (goal) { goal.totalPracticeKarma = (goal.totalPracticeKarma || 0) + 1; goal.completedOneToday = true; }
-
-      state.dailyActions.splice(taskIndex, 1);
-
-      try { dom.fireSound.currentTime = 0; dom.fireSound.play().catch(()=>{}); } catch(e){}
-      if (navigator.vibrate) navigator.vibrate(50);
-
-      karmaItem.classList.add('completed');
-      setTimeout(saveState, 500);
-    }
-
-    function handleVikarmaLog(e) {
-      const karmaItem = e.target.closest('.karma-item'); if (!karmaItem) return;
-      const taskId = String(karmaItem.dataset.id);
-      const taskIndex = state.dailyActions.findIndex(t => String(t.id) === taskId);
-      if (taskIndex === -1) return;
-
-      const task = state.dailyActions[taskIndex];
-      const goal = state.goals.find(g => String(g.id) === String(task.goalId));
-
-      state.dailyKarma = (state.dailyKarma || 0) - 1;
-      state.metrics.loggedNegativeToday = (state.metrics.loggedNegativeToday || 0) + 1; // NEW
-      if (goal) goal.totalPracticeKarma = (goal.totalPracticeKarma || 0) - 1;
-
-      state.dailyActions.splice(taskIndex, 1);
-
-      if (navigator.vibrate) navigator.vibrate([100, 30, 100]);
-
-      karmaItem.classList.add('completed');
-      setTimeout(saveState, 500);
-    }
-
-    function handleDeleteTask(e) {
-      const karmaItem = e.target.closest('.karma-item'); if (!karmaItem) return;
-      const taskId = String(karmaItem.dataset.id);
-      const task = state.dailyActions.find(t => String(t.id) === taskId);
-      if (!task) return;
-
-      if (task.type === 'vikarma') {
-        showMessage('Negative actions should be logged, not deleted.', 'error');
-        return;
-      }
-      // FIX: Do not decrement dailyKarma when deleting a positive task.
-      state.dailyActions = state.dailyActions.filter(t => String(t.id) !== taskId);
-      showMessage('Action removed.', 'info');
-      saveState();
-    }
-
-    function handleDeleteGoal(e) {
-      const goalId = String(e.target.closest('.delete-goal-btn').dataset.goalId);
-      openConfirmModal('Delete Practice?', 'This will remove the practice and any of its tasks for today. This cannot be undone.', () => {
-        state.goals = state.goals.filter(g => String(g.id) !== goalId);
-        state.dailyActions = state.dailyActions.filter(t => String(t.goalId) !== goalId);
-        showMessage('Practice removed.', 'info');
-        saveState();
-      });
-    }
-
-    // Existing end-of-day flow
-    function endDay() {
-      let finalDailyKarma = state.dailyKarma || 0;
-      const missedKarmas = state.dailyActions.filter(t => t.type === 'karma');
-      missedKarmas.forEach(() => { finalDailyKarma -= 1; });
-
-      state.goals.forEach(goal => {
-        if (goal.hadTasksToday && goal.completedOneToday) {
-          goal.satatya = (goal.satatya || 0) + 1;
-          badges.forEach(badge => {
-            if (goal.satatya >= badge.days && (!state.unlockedBadges || !state.unlockedBadges.includes(badge.name))) {
-              state.unlockedBadges = state.unlockedBadges || [];
-              state.unlockedBadges.push(badge.name);
-              setTimeout(() => showBadgeUnlockModal(badge), 500);
-            }
-          });
-        } else if (goal.hadTasksToday) {
-          goal.satatya = 0;
-        }
-      });
-
-      pendingFinalDailyKarma = finalDailyKarma;
-      // Summary will read metrics directly for breakdown
-      showSummaryModal(finalDailyKarma, missedKarmas.length);
-    }
-
-    function finalizeDay(finalDailyKarma, prayashchitChoice = null) {
-      state.totalKarma = (state.totalKarma || 0) + finalDailyKarma;
-      state.dailyKarma = 0;
-      state.dailyActions = [];
-      state.metrics = { completedPositiveToday: 0, loggedNegativeToday: 0 }; // reset metrics
-
-      state.goals.forEach(g => { g.hadTasksToday = false; g.completedOneToday = false; });
-
-      if (prayashchitChoice) {
-        state.dailyActions.push({ id: makeId(), name: prayashchitChoice, type: 'prayashchit', goalId: null, order: 0 });
-      }
-      pendingFinalDailyKarma = null;
-
-      // mark finalized with LOCAL date
-      state.lastFinalizedDate = localDateISO();
-      saveState();
-    }
-
-    // Drag/reorder
-    let draggedItem = null;
-    dom.taskList.addEventListener('dragstart', e => {
-      if (e.target.classList.contains('karma-item')) {
-        draggedItem = e.target;
-        setTimeout(() => e.target.classList.add('dragging'), 0);
-      }
-    });
-    dom.taskList.addEventListener('dragover', e => {
-      e.preventDefault();
-      const containerRect = dom.taskList.getBoundingClientRect();
-      const y = e.clientY;
-      if (y < containerRect.top + 50) { window.scrollBy(0, -15); }
-      else if (y > containerRect.bottom - 50) { window.scrollBy(0, 15); }
-
-      const afterElement = getDragAfterElement(dom.taskList, y);
-      if (afterElement == null) { dom.taskList.appendChild(draggedItem); }
-      else { dom.taskList.insertBefore(draggedItem, afterElement); }
-    });
-    dom.taskList.addEventListener('dragend', () => {
-      if (draggedItem) {
-        draggedItem.classList.remove('dragging');
-        draggedItem = null;
-        const newOrderedIds = [...dom.taskList.querySelectorAll('.karma-item')].map(item => String(item.dataset.id));
-        state.dailyActions.forEach(task => { task.order = newOrderedIds.indexOf(String(task.id)); });
-        saveState();
-      }
-    });
-    function getDragAfterElement(container, y) {
-      const draggableElements = [...container.querySelectorAll('.karma-item:not(.dragging)')];
-      return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; }
-        else { return closest; }
-      }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    // Feedback
-    function showMessage(message, type = 'success') {
-      const box = document.getElementById('message-box');
-      box.textContent = message;
-      box.className = 'fixed bottom-16 right-5 p-4 text-sm rounded-lg shadow-lg z-50 ';
-      if (type === 'success') box.classList.add('bg-green-100', 'dark:bg-green-900', 'text-green-800', 'dark:text-green-200');
-      else if (type === 'error') box.classList.add('bg-red-100', 'dark:bg-red-900', 'text-red-800', 'dark:text-red-200');
-      else box.classList.add('bg-blue-100', 'dark:bg-blue-900', 'text-blue-800', 'dark:text-blue-200');
-      box.classList.remove('hidden');
-      setTimeout(() => box.classList.add('hidden'), 3000);
-    }
-
-    function animateValue(element, targetValue) {
-      const startValue = parseInt(element.textContent.replace(/,/g, '')) || 0;
-      if (startValue === targetValue) { element.textContent = targetValue; return; }
-      const duration = 300;
-      let startTime = null;
-      const step = (currentTime) => {
-        if (!startTime) startTime = currentTime;
-        const progress = Math.min((currentTime - startTime) / duration, 1);
-        element.textContent = Math.floor(progress * (targetValue - startValue) + startValue);
-        if (progress < 1) window.requestAnimationFrame(step);
-      };
-      window.requestAnimationFrame(step);
-    }
-
-    function showBadgeUnlockModal(badge) {
-      dom.badgeModalContent.innerHTML = `
-        <i class="fas ${badge.icon} text-6xl mb-4 ${badge.color} badge-ceremony-icon" aria-hidden="true"></i>
-        <h2 class="text-3xl font-bold">Badge Unlocked!</h2>
-        <p class="text-xl mt-2">${esc(badge.name)}</p>
-        <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${esc(badge.meaning)}"</p>
-        <button onclick="closeModal('badge-modal')" class="mt-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-semibold py-2 px-6 rounded-lg">Continue</button>`;
-      dom.badgeModal.classList.remove('hidden');
-    }
-
-    function showBadgeInfoModal(badge) {
-      dom.badgeModalContent.innerHTML = `
-        <i class="fas ${badge.icon} text-6xl mb-4 text-slate-400" aria-hidden="true"></i>
-        <h2 class="text-3xl font-bold">${esc(badge.name)}</h2>
-        <p class="text-slate-500 dark:text-slate-400 mt-2">Requires ${badge.days} days of Sātatya in a single practice to unlock.</p>
-        <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${esc(badge.meaning)}"</p>
-        <button onclick="closeModal('badge-modal')" class="mt-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-semibold py-2 px-6 rounded-lg">Close</button>`;
-      dom.badgeModal.classList.remove('hidden');
-    }
-
-    // ---- Summary (with breakdown) + flexible flow ----
-    function showSummaryModal(finalDailyKarma, missedCount, opts = {}) {
-      const title = opts.title || 'Day Complete';
-      const earned = (opts.earned != null) ? opts.earned : (state.metrics?.completedPositiveToday || 0);
-      const negatives = (opts.negatives != null) ? opts.negatives : (state.metrics?.loggedNegativeToday || 0);
-      const planned = earned + (missedCount || 0);
-
-      dom.summaryModalContent.innerHTML = `
-        <h2 class="text-3xl font-bold">${esc(title)}</h2>
-
-        <div class="mt-4 text-left bg-slate-100 dark:bg-slate-700 rounded-lg p-4">
-          <div class="flex justify-between"><span>Planned (positive)</span><span class="font-semibold">${planned}</span></div>
-          <div class="flex justify-between mt-1"><span>Earned (done)</span><span class="font-semibold karma-positive">+${earned}</span></div>
-          <div class="flex justify-between mt-1"><span>Missed (penalty)</span><span class="font-semibold karma-negative">-${missedCount || 0}</span></div>
-          <div class="flex justify-between mt-1"><span>Negatives logged</span><span class="font-semibold karma-negative">-${negatives}</span></div>
-          <hr class="my-3 border-slate-300 dark:border-slate-600">
-          <div class="flex justify-between text-lg">
-            <span>Final Karma</span>
-            <span class="font-bold ${finalDailyKarma >= 0 ? 'karma-positive' : 'karma-negative'}">${finalDailyKarma > 0 ? '+' : ''}${finalDailyKarma}</span>
-          </div>
-        </div>
-
-        <button id="close-summary-btn" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg">Continue</button>`;
-      dom.summaryModal.classList.remove('hidden');
-
-      document.getElementById('close-summary-btn').onclick = () => {
-        dom.summaryModal.classList.add('hidden');
-        if (typeof opts.onContinue === 'function') {
-          opts.onContinue();
-          return;
-        }
-        // Default: show prayashchit if negative, else finalize now
-        if (finalDailyKarma < 0) {
-          renderPrayashchitOptions();
-          dom.prayashchitModal.classList.remove('hidden');
-          setPrayashchitHandler(() => {
-            const selected = document.querySelector('input[name="prayashchit"]:checked');
-            const choice = selected ? selected.value : null;
-            closeModal('prayashchit-modal');
-            finalizeDay(finalDailyKarma, choice);
-          });
-        } else {
-          finalizeDay(finalDailyKarma);
-        }
-      };
-    }
-
-    function showSummaryOnlyQueued(ps) {
-      showSummaryModal(ps.finalDailyKarma, ps.missedCount, {
-        title: `Yesterday Complete (${ps.dateISO})`,
-        earned: ps.earned || 0,
-        negatives: ps.negatives || 0,
-        onContinue: () => {
-          // After acknowledging yesterday, ask for Prayashchit if needed (add to *today*)
-          if (state.pendingPrayashchit) {
-            renderPrayashchitOptions();
-            dom.prayashchitModal.classList.remove('hidden');
-            setPrayashchitHandler(() => {
-              const selected = document.querySelector('input[name="prayashchit"]:checked');
-              const choice = selected ? selected.value : null;
-              closeModal('prayashchit-modal');
-              if (choice) {
-                state.dailyActions.push({ id: makeId(), name: choice, type: 'prayashchit', goalId: null, order: 0 });
-              }
-              delete state.pendingPrayashchit;
-              saveState();
-            });
-          }
-        }
-      });
-    }
-
-    // --- Queued Summary state ---
-    function queueSummary({ finalDailyKarma, missedCount, dateISO, earned = 0, negatives = 0 }) {
-      state.pendingSummary = { finalDailyKarma, missedCount, dateISO, earned, negatives };
-      state.pendingPrayashchit = finalDailyKarma < 0;
-      saveState();
-    }
-
-    function maybeShowQueuedSummary() {
-      const ps = state.pendingSummary;
-      if (!ps) return;
-      // Show once, then clear
-      delete state.pendingSummary;
-      saveState();
-      showSummaryOnlyQueued(ps);
-    }
-
-    // Drag helpers etc already defined above...
-
-    function renderPrayashchitOptions() {
-      const allOptions = [...prayashchitList, ...(state.customPrayashchits || [])];
-      dom.prayashchitOptionsEl.innerHTML = '';
-      [...allOptions].sort(() => 0.5 - Math.random()).slice(0, 3).forEach((p, i) => {
-        const pSafe = esc(p);
-        dom.prayashchitOptionsEl.innerHTML += `<label class="flex items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg"><input type="radio" name="prayashchit" value="${pSafe}" class="mr-3" ${i===0 ? 'checked' : ''}>${pSafe}</label>`;
-      });
-    }
-
-    function addCustomPrayashchit() {
-      const newPrayashchit = dom.customPrayashchitInput.value.trim();
-      if (newPrayashchit && !(state.customPrayashchits || []).includes(newPrayashchit)) {
-        state.customPrayashchits = state.customPrayashchits || [];
-        state.customPrayashchits.push(newPrayashchit);
-        dom.customPrayashchitInput.value = '';
-        renderPrayashchitOptions();
-        saveState();
-      }
-    }
-
-    function handleResetKarma() {
-      openConfirmModal('Reset All Karma?', 'This will reset your Total Karma and all Practice Karma scores to zero. This cannot be undone.', () => {
-        state.totalKarma = 0;
-        state.goals.forEach(g => g.totalPracticeKarma = 0);
-        showMessage('Your accumulated Karma has been reset.', 'info');
-        saveState();
-      });
-    }
-
-    function openConfirmModal(title, text, onConfirm) {
-      dom.confirmModalTitle.textContent = title;
-      dom.confirmModalText.textContent = text;
-      dom.confirmModal.classList.remove('hidden');
-      confirmAction = onConfirm;
-    }
-
-    function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
-
-    function toggleSidebar(show) {
-      if (show) { dom.sidebar.classList.remove('-translate-x-full'); dom.sidebarOverlay.classList.remove('hidden'); }
-      else { dom.sidebar.classList.add('-translate-x-full'); dom.sidebarOverlay.classList.add('hidden'); }
-    }
-
-    // ----- Prayashchit handler manager (avoid double handlers) -----
-    function setPrayashchitHandler(fn){
-      dom.acceptPrayashchitBtn.onclick = null;
-      dom.acceptPrayashchitBtn.onclick = fn;
-    }
-
-    // --- Settings UI init/bind ---
-    function initSettingsUI(){
-      const s = state.settings || defaultState.settings;
-      dom.remindersToggle.checked = !!s.remindersEnabled;
-      dom.pushToggle.checked = !!s.pushRemindersEnabled;
-      dom.endDayTimeInput.value = s.endDayTime || "22:30";
-      dom.autoFinalizeInput.value = s.autoFinalizeAfterMins ?? 30;
-    }
-    function bindSettingsEvents(){
-      dom.remindersToggle.addEventListener('change', () => {
-        state.settings.remindersEnabled = dom.remindersToggle.checked; saveState();
-      });
-      dom.pushToggle.addEventListener('change', async () => {
-        if (dom.pushToggle.checked) {
-          const ok = await ensurePushPermission();
-          state.settings.pushRemindersEnabled = !!ok;
-          dom.pushToggle.checked = !!ok;
-        } else {
-          state.settings.pushRemindersEnabled = false;
-        }
-        saveState();
-      });
-      dom.endDayTimeInput.addEventListener('change', () => {
-        state.settings.endDayTime = dom.endDayTimeInput.value || "22:30"; saveState();
-      });
-      dom.autoFinalizeInput.addEventListener('change', () => {
-        const v = parseInt(dom.autoFinalizeInput.value, 10);
-        state.settings.autoFinalizeAfterMins = isNaN(v) ? 30 : Math.max(5, v); saveState();
-      });
-    }
-    bindSettingsEvents();
-
-    // --- Foreground Reminder Scheduler ---
-    let schedulerTimer = null;
-    let alreadyReminded = new Set();
-    function scheduleForegroundReminders(){
-      if (schedulerTimer) clearInterval(schedulerTimer);
-      schedulerTimer = setInterval(checkDueReminders, 30 * 1000);
-      checkDueReminders();
-    }
-    function parseHM(hm){
-      if (!hm) return null;
-      const [h,m] = hm.split(':').map(Number);
-      const d = new Date();
-      d.setHours(h||0, m||0, 0, 0);
-      return d;
-    }
-    function markKey(id, kind){ return `${id}:${kind}:${new Date().toDateString()}`; }
-    async function checkDueReminders(){
-      const s = state.settings || {};
-      if (!s.remindersEnabled) return;
-      const now = Date.now();
-
-      // task reminders
-      (state.dailyActions || []).forEach(t => {
-        if (t.type !== 'karma') return;
-        const r = parseHM(t.remindAt);
-        if (!r) return;
-        const key = markKey(t.id, 'remind');
-        if (!alreadyReminded.has(key) && Math.abs(now - r.getTime()) < 60*1000) {
-          alreadyReminded.add(key);
-          vibrateSoft();
-          showMessage(`Reminder: ${t.name}`, 'info');
-          maybeNotify(`Reminder: ${t.name}`, `Do it before ${t.deadlineAt || 'deadline'}`);
-        }
-      });
-
-      // end-day reminder
-      const edt = parseHM((state.settings||{}).endDayTime);
-      if (edt) {
-        const endKey = markKey('endday','remind');
-        if (!alreadyReminded.has(endKey) && Math.abs(now - edt.getTime()) < 60*1000) {
-          alreadyReminded.add(endKey);
-          vibrateSoft();
-          showMessage('Time to wrap up your day. Review & complete tasks.', 'info');
-          maybeNotify('Day Wrap-Up', 'Review today’s tasks now.');
-          state._autoFinalizeAt = edt.getTime() + (state.settings.autoFinalizeAfterMins||30)*60*1000;
-          saveState();
-        }
-
-        // auto finalize if overdue and not done yet
-        const todayLocal = localDateISO();
-        if (state.lastFinalizedDate !== todayLocal && state._autoFinalizeAt && now >= state._autoFinalizeAt){
-          const missedKarmas = state.dailyActions.filter(t => t.type === 'karma');
-          let finalDailyKarma = (state.dailyKarma || 0) - missedKarmas.length;
-
-          // queue a summary for "today" (being finalized now)
-          queueSummary({
-            finalDailyKarma,
-            missedCount: missedKarmas.length,
-            dateISO: todayLocal,
-            earned: state.metrics?.completedPositiveToday || 0,
-            negatives: state.metrics?.loggedNegativeToday || 0
-          });
-
-          finalizeDay(finalDailyKarma);
-          state.lastFinalizedDate = todayLocal;
-          delete state._autoFinalizeAt;
-          saveState();
-          showMessage('Day auto-finalized.', 'success');
-          maybeNotify('Day finalized', `Final karma: ${finalDailyKarma >= 0 ? '+' : ''}${finalDailyKarma}`);
-
-          // surface it right away if app is open
-          maybeShowQueuedSummary();
-        }
-      }
-    }
-    function vibrateSoft(){ try{ if(navigator.vibrate) navigator.vibrate([30,30,30]); }catch(e){} }
-    async function maybeNotify(title, body){
-      try{
-        if (!('Notification' in window)) return;
-        if (Notification.permission === 'granted') {
-          const reg = await navigator.serviceWorker.getRegistration();
-          if (reg) reg.showNotification(title, { body, icon: '/icons/icon-192x192.png' });
-          else new Notification(title, { body });
-        }
-      }catch(e){}
-    }
-
-    // --- Resume safety net (finalize missed day) ---
-    function maybeFinalizeMissedDay(){
-      const todayLocal = localDateISO();
-      if (state.lastFinalizedDate !== todayLocal){
-        const missedKarmas = state.dailyActions.filter(t => t.type === 'karma');
-        let finalDailyKarma = (state.dailyKarma || 0) - missedKarmas.length;
-
-        // infer "yesterday" as last finalized or yesterday date
-        const y = state.lastFinalizedDate || localDateISO(new Date(Date.now() - 86400000));
-
-        // queue yesterday’s summary BEFORE we wipe lists
-        queueSummary({
-          finalDailyKarma,
-          missedCount: missedKarmas.length,
-          dateISO: y,
-          earned: state.metrics?.completedPositiveToday || 0,
-          negatives: state.metrics?.loggedNegativeToday || 0
-        });
-
-        finalizeDay(finalDailyKarma);
-        state.lastFinalizedDate = todayLocal;
-        saveState();
-        showMessage('Finalized previous day on resume.', 'info');
-
-        // show the queued summary immediately
-        maybeShowQueuedSummary();
-      }
-    }
-
-    // --- Push (optional) ---
-    async function ensurePushPermission(){
-      try{
-        if (!('Notification' in window)) { showMessage('Notifications not supported on this device.', 'error'); return false; }
-        const perm = await Notification.requestPermission();
-        if (perm !== 'granted') { showMessage('Notifications permission denied.', 'error'); return false; }
-        if (!messaging) messaging = firebase.messaging();
-        const reg = await navigator.serviceWorker.ready;
-        const token = await messaging.getToken({
-          vapidKey: 'BCoF7_yJ4AcT_dyf98XjeZ8H8X3IxRmynPLGddqOsj6TcSO5Xni5Bx7nYS1FOZDzG1f03VPJ6JUXUqZ2yd_GpFs',
-          serviceWorkerRegistration: reg
-        });
-        const uid = auth.currentUser?.uid;
-        if (uid && token) await db.collection('users').doc(uid).set({ fcmToken: token }, { merge: true });
-        showMessage('Push reminders enabled.', 'success');
-        return true;
-      }catch(e){ console.error(e); showMessage(e.message || 'Push set-up failed.', 'error'); return false; }
-    }
-
-    // --- Diary / Notes ---
-    function watchNotes(){
-      if (notesUnsub) notesUnsub();
-      const uid = auth.currentUser?.uid;
-      if (!uid) return;
-      notesUnsub = db.collection('users').doc(uid).collection('notes')
-        .orderBy('createdAt','desc')
-        .onSnapshot(snap => {
-          const list = [];
-          snap.forEach(d => list.push({ id:d.id, ...d.data() }));
-          renderNotes(list);
-        }, (err) => {
-          console.error('notes listener error:', err);
-          showMessage('Cannot load notes: ' + (err.message || err), 'error');
-        });
-    }
-    function renderNotes(list){
-      const el = dom.notesList;
-      el.innerHTML = '';
-      if (!list.length) { el.innerHTML = `<p class="text-slate-500 italic">No notes yet.</p>`; return; }
-      list.forEach(n => {
-        const ts = n.createdAt?.toDate?.() || (n.createdAt ? new Date(n.createdAt) : new Date());
-        el.innerHTML += `
-          <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow">
-            <div class="flex items-center justify-between">
-              <p class="font-semibold">${esc(n.title||'Untitled')}</p>
-              <span class="text-xs text-slate-400">${ts.toLocaleString()}</span>
-            </div>
-            <p class="mt-2 whitespace-pre-wrap">${esc(n.body||'')}</p>
-            ${n.audioUrl ? `<audio class="mt-2 w-full" controls src="${esc(n.audioUrl)}"></audio>` : ''}
-          </div>`;
-      });
-    }
-    async function saveNote({title, body, audioBlob}){
-      const uid = auth.currentUser?.uid; if (!uid) { showMessage('Not signed in.', 'error'); return; }
-      try {
-        let audioUrl = null;
-        if (audioBlob){
-          const mime = audioBlob.type || 'audio/webm';
-          const ext =
-            mime.includes('mp4') ? 'm4a' :
-            mime.includes('mpeg') ? 'mp3' :
-            'webm';
-
-          const path = `notes/${uid}/${Date.now()}.${ext}`;
-          const ref = storage.ref().child(path);
-          await ref.put(audioBlob, { contentType: mime });
-          audioUrl = await ref.getDownloadURL();
-        }
-
-        await db.collection('users').doc(uid).collection('notes').add({
-          title: title || '',
-          body: body || '',
-          audioUrl,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        showMessage('Note saved.', 'success');
-      } catch (e) {
-        console.error('saveNote error:', e);
-        showMessage('Failed to save note: ' + (e.message || e), 'error');
-      }
-    }
-
-    // Dictation (start/stop)
-    let _sr = null;
-    dom.btnDictate.onclick = () => {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!_sr) {
-        if (!SR) { showMessage('Speech recognition not supported. Use Record instead.', 'error'); return; }
-        _sr = new SR();
-        _sr.continuous = true;
-        _sr.interimResults = true;
-        _sr.lang = 'en-IN';
-        _sr.onresult = (ev) => {
-          let txt = '';
-          for (let i = ev.resultIndex; i < ev.results.length; i++){ txt += ev.results[i][0].transcript; }
-          dom.noteBody.value = txt;
-        };
-        _sr.onend = () => { showMessage('Dictation ended.', 'info'); _sr = null; };
-        _sr.onerror = (e) => { console.error('speech error', e); showMessage('Speech error.', 'error'); _sr = null; };
-        _sr.start();
-        showMessage('Dictating... tap again to stop.', 'info');
-      } else {
-        try { _sr.stop(); } catch(_) {}
-      }
-    };
-
-    // Recording (cross-browser)
-    let rec, chunks = [];
-    let currentMime = '';
-    let currentExt = '';
-    function pickSupportedMime(){
-      const candidates = [
-        'audio/webm;codecs=opus',
-        'audio/webm',
-        'audio/mp4',
-        'audio/mpeg'
-      ];
-      for (const m of candidates) {
-        if (window.MediaRecorder && typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(m)) {
-          return m;
-        }
-      }
-      return '';
-    }
-
-    dom.btnRecord.onclick = async () => {
-      if (rec && rec.state === 'recording') {
-        try { rec.stop(); } catch(_) {}
-        return;
-      }
-      if (!window.MediaRecorder) {
-        showMessage('Recording not supported on this browser. Use Dictate or type.', 'error');
-        return;
-      }
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        chunks = [];
-
-        currentMime = pickSupportedMime();
-        currentExt =
-          currentMime.includes('mp4') ? 'm4a' :
-          currentMime.includes('mpeg') ? 'mp3' :
-          'webm';
-
-        rec = currentMime ? new MediaRecorder(stream, { mimeType: currentMime }) : new MediaRecorder(stream);
-
-        rec.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-
-        rec.onstop = async () => {
-          try {
-            const type = currentMime || 'audio/webm';
-            const blob = new Blob(chunks, { type });
-            await saveNote({
-              title: dom.noteTitle.value.trim(),
-              body: dom.noteBody.value.trim(),
-              audioBlob: blob
-            });
-          } catch (e) {
-            console.error('onstop save error:', e);
-            showMessage('Could not save recording: ' + (e.message || e), 'error');
-          } finally {
-            stream.getTracks().forEach(t => t.stop());
-          }
-        };
-
-        rec.start();
-        showMessage(`Recording... tap again to stop (${currentExt || 'audio'})`, 'info');
-      } catch (e) {
-        console.error('getUserMedia error:', e);
-        showMessage('Mic permission denied or unavailable.', 'error');
-      }
-    };
-
-    dom.btnSaveNote.onclick = () => saveNote({ title: dom.noteTitle.value.trim(), body: dom.noteBody.value.trim() });
-
-    // Tabs
-    function switchView(name){
-      dom.viewTasks.classList.toggle('hidden', name!=='tasks');
-      dom.viewDiary.classList.toggle('hidden', name!=='diary');
-    }
-    dom.tabTasks.onclick = () => switchView('tasks');
-    dom.tabDiary.onclick = () => switchView('diary');
-
-    // Gita quote
-    let _gitaShown = false;
-    function showGitaQuoteOnce(){
-      if (_gitaShown) return;
-      const q = gitaQuotes[Math.floor(Math.random()*gitaQuotes.length)];
-      dom.gitaQuoteEl.textContent = q;
-      _gitaShown = true;
-    }
-
-    // --- Quick Ad-hoc Vikarma ---
-    function quickLogVikarma() {
-      const name = (prompt('What happened? (optional description)') || '').trim();
-
-      // Optional: attribute to a practice by number
-      let goalId = null;
-      if (state.goals && state.goals.length) {
-        const options = state.goals.map((g, i) => `${i+1}. ${g.name}`).join('\n');
-        const pick = prompt(`Attribute to a practice? Enter number or leave blank:\n${options}`);
-        const idx = parseInt(pick, 10);
-        if (!isNaN(idx) && idx >= 1 && idx <= state.goals.length) {
-          goalId = String(state.goals[idx - 1].id);
-        }
-      }
-
-      // Apply effects
-      state.dailyKarma = (state.dailyKarma || 0) - 1;
-      state.metrics = state.metrics || { completedPositiveToday: 0, loggedNegativeToday: 0 };
-      state.metrics.loggedNegativeToday = (state.metrics.loggedNegativeToday || 0) + 1;
-
-      if (goalId) {
-        const goal = state.goals.find(g => String(g.id) === goalId);
-        if (goal) goal.totalPracticeKarma = (goal.totalPracticeKarma || 0) - 1;
-      }
-
-      // Optional visible record
-      if (name) {
-        state.dailyActions.push({
-          id: makeId(),
-          name: `Vikarma: ${name}`,
-          type: 'vikarma',
-          goalId,
-          order: state.dailyActions.length
-        });
-      }
-
-      showMessage('Vikarma logged.', 'info');
-      saveState();
-    }
-
-    // Events
-    dom.googleSigninBtn.addEventListener('click', () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(err => {
-        if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
-          auth.signInWithRedirect(provider);
-        } else { showMessage(err.message, 'error'); }
-      });
-    });
-    dom.googleRedirectFallback.addEventListener('click', (e) => { e.preventDefault(); const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithRedirect(provider); });
-
-    dom.emailSignupBtn.addEventListener('click', () => { auth.createUserWithEmailAndPassword(dom.emailInput.value, dom.passwordInput.value).catch(e => showMessage(e.message, 'error')); });
-    dom.emailSigninBtn.addEventListener('click', () => { auth.signInWithEmailAndPassword(dom.emailInput.value, dom.passwordInput.value).catch(e => showMessage(e.message, 'error')); });
-    dom.forgotPasswordBtn.addEventListener('click', async () => {
-      const email = dom.emailInput.value.trim();
-      if (!email) { showMessage('Enter your email above first.', 'error'); return; }
-      try { await auth.sendPasswordResetEmail(email); showMessage('Password reset email sent.', 'success'); }
-      catch (e) { showMessage(e.message, 'error'); }
-    });
-    dom.signoutBtn.addEventListener('click', () => auth.signOut());
-    dom.menuBtn.addEventListener('click', () => toggleSidebar(true));
-    dom.sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
-    dom.addGoalBtn.addEventListener('click', addGoal);
-    dom.sidebarGoalList.addEventListener('click', (e) => { if(e.target.closest('.delete-goal-btn')) handleDeleteGoal(e); });
-    dom.addKarmaBtn.addEventListener('click', openAddKarmaModal);
-    dom.addKarmaForm.addEventListener('submit', handleAddKarma);
-    dom.cancelAddKarmaBtn.addEventListener('click', () => closeModal('add-karma-modal'));
-    dom.taskList.addEventListener('click', handleTaskClick);
-    dom.resetDayBtn.addEventListener('click', endDay); // kept for safety, but button is hidden
-    dom.resetKarmaBtn.addEventListener('click', handleResetKarma);
-    dom.sidebarBadgeContainer.addEventListener('click', e => {
-      const badgeEl = e.target.closest('.badge');
-      if (!badgeEl) return;
-      const badge = badges.find(b => b.name === badgeEl.dataset.badgeName);
-      if (!badge) return;
-      if (badgeEl.classList.contains('unlocked')) { showBadgeUnlockModal(badge); } else { showBadgeInfoModal(badge); }
-    });
-    dom.addCustomPrayashchitBtn.addEventListener('click', addCustomPrayashchit);
-
-    // NOTE: We do NOT keep a global acceptPrayashchit handler anymore; we set it per-flow via setPrayashchitHandler(...)
-
-    document.getElementById('quick-log-vikarma-btn').addEventListener('click', quickLogVikarma);
-
-    dom.confirmModalCancelBtn.addEventListener('click', () => closeModal('confirm-modal'));
-    dom.confirmModalConfirmBtn.addEventListener('click', () => {
-      if (typeof confirmAction === 'function') { confirmAction(); }
-      closeModal('confirm-modal');
-    });
-    document.addEventListener('click', e => { if (e.target.id === 'badge-modal') closeModal('badge-modal'); });
-    dom.themeToggleBtn.addEventListener('click', () => setTheme(!document.documentElement.classList.contains('dark')));
-
-  </script>
-
- <script>
-  const SW_PATH = './service-worker.js'; // adjust if you renamed it
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async () => {
-      try {
-        const reg = await navigator.serviceWorker.register(SW_PATH);
-        console.log('SW registered:', reg);
-
-        // If there's an updated worker waiting, activate it immediately.
-        if (reg.waiting) {
-          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-        }
-
-        // When a new worker is found, ask it to skip waiting as soon as it's installed.
-        reg.addEventListener('updatefound', () => {
-          const nw = reg.installing;
-          if (!nw) return;
-          nw.addEventListener('statechange', () => {
-            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-              nw.postMessage({ type: 'SKIP_WAITING' });
-            }
-          });
-        });
-
-        // When the controller changes (new SW takes control), reload to get fresh assets.
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          // avoid infinite loop: reload once
-          if (!window.__reloadedForSW) {
-            window.__reloadedForSW = true;
-            window.location.reload();
-          }
-        });
-      } catch (err) {
-        console.log('ServiceWorker registration failed: ', err);
-      }
-    });
-  }
-
-  // Install prompt handling
-  let deferredPrompt;
-  const installBtn = document.getElementById('installBtn');
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBtn.style.display = 'inline-block';
-  });
-  installBtn.addEventListener('click', async () => {
-    installBtn.style.display = 'none';
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
-      deferredPrompt = null;
-    }
-  });
-  window.addEventListener('appinstalled', () => {
-    installBtn.style.display = 'none';
-    deferredPrompt = null;
-  });
+    // --- DOM ---
+    const dom = {
+      authOverlay: document.getElementById('auth-overlay'),
+      appContainer: document.getElementById('app-container'),
+      googleSigninBtn: document.getElementById('google-signin-btn'),
+      googleRedirectFallback: document.getElementById('google-redirect-fallback'),
+      emailSigninBtn: document.getElementById('email-signin-btn'),
+      emailSignupBtn: document.getElementById('email-signup-btn'),
+      forgotPasswordBtn: document.getElementById('forgot-password-btn'),
+      emailInput: document.getElementById('email-input'),
+      passwordInput: document.getElementById('password-input'),
+      signoutBtn: document.getElementById('signout-btn'),
+      themeToggleBtn: document.getElementById('theme-toggle-btn'),
+      dailyKarmaScoreEl: document.getElementById('daily-karma-score'),
+      totalKarmaScoreEl: document.getElementById('total-karma-score'),
+      gitaQuoteEl: document.getElementById('gita-quote'),
+      taskList: document.getElementById('task-list'),
+      resetDayBtn: document.getElementById('reset-day-btn'),
+      resetKarmaBtn: document.getElementById('reset-karma-btn'),
+      sidebar: document.getElementById('sidebar'),
+      sidebarOverlay: document.getElementById('sidebar-overlay'),
+      menuBtn: document.getElementById('menu-btn'),
+      sidebarGoalList: document.getElementById('sidebar-goal-list'),
+      sidebarBadgeContainer: document.getElementById('sidebar-badge-container'),
+      addGoalBtn: document.getElementById('add-goal-btn'),
+      goalNameInput: document.getElementById('goal-name-input'),
+      addKarmaModal: document.getElementById('add-karma-modal'),
+      addKarmaForm: document.getElementById('add-karma-form'),
+      cancelAddKarmaBtn: document.getElementById('cancel-add-karma-btn'),
+      addKarmaBtn: document.getElementById('add-karma-btn'),
+      karmaGoalSelect: document.getElementById('karma-goal-select'),
+      prayashchitModal: document.getElementById('prayashchit-modal'),
+      prayashchitOptionsEl: document.getElementById('prayashchit-options'),
+      acceptPrayashchitBtn: document.getElementById('accept-prayashchit-btn'),
+      customPrayashchitInput: document.getElementById('custom-prayashchit-input'),
+      addCustomPrayashchitBtn: document.getElementById('add-custom-prayashchit-btn'),
+      fireSound: document.getElementById('fire-sound'),
+      badgeModal: document.getElementById('badge-modal'),
+      badgeModalContent: document.getElementById('badge-modal-content'),
+      summaryModal: document.getElementById('summary-modal'),
+      summaryModalContent: document.getElementById('summary-modal-content'),
+      confirmModal: document.getElementById('confirm-modal'),
+      confirmModalTitle: document.getElementById('confirm-modal-title'),
+      confirmModalText: document.getElementById('confirm-modal-text'),
+      confirmModalCancelBtn: document.getElementById('confirm-modal-cancel-btn'),
+      confirmModalConfirmBtn: document.getElementById('confirm-modal-confirm-btn'),
+      // settings
+      remindersToggle: document.getElementById('toggle-inapp-reminders'),
+      pushToggle: document.getElementById('toggle-push-reminders'),
+      endDayTimeInput: document.getElementById('endday-time'),
+      autoFinalizeInput: document.getElementById('auto-finalize-mins'),
+      // Diary
+      noteTitle: document.getElementById('note-title'),
+      noteBody: document.getElementById('note-body'),
+      btnDictate: document.getElementById('btn-dictate'),
+      btnRecord: document.getElementById('btn-record'),
+      btnSaveNote: document.getElementById('btn-save-note'),
+      notesList: document.getElementById('notes-list'),
+      // Tabs
+      viewTasks: document.getElementById('view-tasks'),
+      viewDiary: document.getElementById('view-diary'),
+      tabTasks: document.getElementById('tab-tasks'),
+      tabDiary: document.getElementById('tab-diary')
+    };
+
+    // --- Helpers ---
+    const makeId = () => (crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+
+    // --- App State ---
+    let state = {};
+    let unsubscribe;
+    let pendingFinalDailyKarma = null;
+    let confirmAction = null;
+    let notesUnsub = null;
+
+    const defaultState = {
+      totalKarma: 0,
+      dailyKarma: 0,
+      goals: [],
+      unlockedBadges: [],
+      dailyActions: [],
+      customPrayashchits: [],
+      settings: {
+        endDayTime: "22:30",
+        autoFinalizeAfterMins: 30,
+        remindersEnabled: true,
+        pushRemindersEnabled: false
+      },
+      lastFinalizedDate: null,
+      metrics: { completedPositiveToday: 0, loggedNegativeToday: 0 } // NEW
+    };
+
+    const badges = [
+      { days: 9, name: 'Arjuna', icon: 'fa-user-graduate', color: 'text-slate-500', meaning: 'The focused warrior, beginning the path.' },
+      { days: 18, name: 'Sthitaprajña', icon: 'fa-brain', color: 'text-sky-500', meaning: 'One of steady wisdom, undisturbed by dualities.' },
+      { days: 27, name: 'Yuktah', icon: 'fa-link', color: 'text-blue-500', meaning: 'One who is linked in yoga, harmonious.' },
+      { days: 36, name: 'Niyatam', icon: 'fa-calendar-check', color: 'text-indigo-500', meaning: 'One who performs prescribed duties consistently.' },
+      { days: 45, name: 'Akartā', icon: 'fa-hand-paper', color: 'text-purple-500', meaning: 'The non-doer, realizing the self is not the agent.' },
+      { days: 54, name: 'Tyāgī', icon: 'fa-leaf', color: 'text-emerald-500', meaning: 'The renouncer of the fruits of action.' },
+      { days: 63, name: 'Samatvam', icon: 'fa-scale-balanced', color: 'text-lime-500', meaning: 'One who maintains equanimity in success and failure.' },
+      { days: 72, name: 'Bhakta', icon: 'fa-heart', color: 'text-rose-500', meaning: 'A devoted soul, connected with love.' },
+      { days: 81, name: 'Jñānī', icon: 'fa-book-open', color: 'text-amber-500', meaning: 'One who possesses true knowledge.' },
+      { days: 90, name: 'Yogī', icon: 'fa-star', color: 'text-orange-500', meaning: 'A master of the self, united with the divine.' },
+      { days: 99, name: 'Brahmabhūta', icon: 'fa-star-of-life', color: 'text-yellow-400', meaning: 'One who has attained the Brahman platform.' },
+      { days: 108, name: 'Ātmarāma', icon: 'fa-sun', color: 'text-yellow-300', meaning: 'One who rejoices in the Self.' }
+    ];
+
+    const gitaQuotes = [
+      "You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions. - 2.47",
+      "Perform your obligatory duty, because action is indeed better than inaction. - 3.8",
+      "The wise see inaction in action and action in inaction. - 4.18",
+      "One who performs their duty without attachment, surrendering the results to the Supreme Lord, is unaffected by sinful action. - 5.10",
+      "It is better to live your own destiny imperfectly than to live an imitation of somebody else's life with perfection. - 3.35"
+    ];
+    const prayashchitList = [ "Take a cold water bath", "Avoid all sugar for 24 hours", "Use stairs instead of the lift", "30 minutes of selfless service (seva)", "Maintain silence for 2 hours" ];
+
+    // --- Auth & State ---
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        dom.authOverlay.classList.add('hidden');
+        dom.appContainer.classList.remove('hidden');
+        loadState(user.uid);
+        watchNotes();
+      } else {
+        dom.authOverlay.classList.remove('hidden');
+        dom.appContainer.classList.add('hidden');
+        if (unsubscribe) unsubscribe();
+        if (notesUnsub) notesUnsub();
+        state = {};
+      }
+    });
+
+    auth.getRedirectResult()
+      .then((result) => { if (result.user) { showMessage(`Welcome, ${result.user.displayName || 'friend'}!`, 'success'); } })
+      .catch((error) => { if (error.code !== 'auth/no-auth-event') { showMessage(error.message, 'error'); } });
+
+    function loadState(userId) {
+      const docRef = db.collection('users').doc(userId);
+      unsubscribe = docRef.onSnapshot(doc => {
+        state = doc.exists ? doc.data() : JSON.parse(JSON.stringify(defaultState));
+        if (!state.dailyActions) state.dailyActions = [];
+        if (!state.goals) state.goals = [];
+        if (!state.customPrayashchits) state.customPrayashchits = [];
+        if (!state.settings) state.settings = JSON.parse(JSON.stringify(defaultState.settings));
+        if (!state.metrics) state.metrics = { completedPositiveToday: 0, loggedNegativeToday: 0 }; // ensure metrics exist
+
+        state.goals.forEach(g => {
+          if (g.totalPracticeKarma === undefined) g.totalPracticeKarma = 0;
+          if (g.completedOneToday === undefined) g.completedOneToday = false;
+          if (g.hadTasksToday === undefined) g.hadTasksToday = false;
+        });
+        if (!doc.exists) saveState();
+        renderAll();
+        maybeFinalizeMissedDay();
+        scheduleForegroundReminders();
+        maybeShowQueuedSummary(); // show any queued summary immediately
+      });
+    }
+
+    function saveState() {
+      if (auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).set(state, { merge: true })
+          .catch(error => console.error("Error saving state: ", error));
+      }
+    }
+
+    // --- Rendering ---
+    function renderAll() {
+      if (!state.goals) return;
+      renderSidebar();
+      renderTaskList();
+      updateStats();
+      initSettingsUI();
+      showGitaQuoteOnce();
+    }
+
+    function renderSidebar() {
+      dom.sidebarGoalList.innerHTML = '';
+      if (state.goals.length > 0) {
+        state.goals.forEach(goal => {
+          const goalIdStr = String(goal.id);
+          dom.sidebarGoalList.innerHTML += `
+            <div class="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg">
+              <span class="font-semibold">${esc(goal.name)}</span>
+              <div class="text-right flex-shrink-0 ml-2">
+                <p class="font-bold text-sm">Sātatya: ${goal.satatya || 0}</p>
+                <p class="text-xs text-slate-400">Karma: ${goal.totalPracticeKarma || 0}</p>
+              </div>
+              <button class="delete-goal-btn text-slate-400 hover:text-red-500 ml-2" data-goal-id="${goalIdStr}" aria-label="Delete practice"><i class="fas fa-trash"></i></button>
+            </div>`;
+        });
+      } else {
+        dom.sidebarGoalList.innerHTML = `<p class="text-sm text-slate-500 italic">Create your first practice above.</p>`;
+      }
+      renderBadges();
+    }
+
+    function renderTaskList() {
+      dom.taskList.innerHTML = '';
+      if (state.dailyActions.length === 0) {
+        dom.taskList.innerHTML = `<p class="text-center text-slate-500 italic py-8">A fresh start. Add your actions for today.</p>`;
+        return;
+      }
+      state.dailyActions.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'karma-item bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md';
+        li.dataset.id = String(task.id);
+        li.draggable = true;
+
+        const goal = state.goals.find(g => String(g.id) === String(task.goalId));
+        const goalName = goal ? goal.name : 'Penance';
+        const deleteBtnHTML = `<button class="delete-task-btn text-slate-400 hover:text-red-500 text-xs ml-2" aria-label="Delete action"><i class="fas fa-times"></i></button>`;
+
+        const safeName = esc(task.name);
+        const safeGoalName = esc(goalName);
+        const timing = (task.remindAt || task.deadlineAt)
+          ? `<div class="text-[11px] text-slate-400 mt-1">${task.remindAt ? `🔔 ${task.remindAt}` : ''} ${task.deadlineAt ? `• ⏰ ${task.deadlineAt}` : ''}</div>`
+          : '';
+
+        if (task.type === 'prayashchit') {
+          li.classList.add('prayashchit-card');
+          li.innerHTML = `<div class="flex items-center"><i class="fas fa-person-praying text-amber-500 mr-4" aria-hidden="true"></i><div><p class="font-semibold text-lg">${safeName}</p><p class="text-xs text-slate-400">Prayashchit (from yesterday)</p>${timing}</div></div>`;
+        } else if (task.type === 'karma') {
+          li.innerHTML = `<div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <i class="fas fa-leaf text-green-500 mr-4" aria-hidden="true"></i>
+              <div><p class="font-semibold text-lg">${safeName}</p><p class="text-xs text-slate-400">${safeGoalName}</p>${timing}</div>
+            </div>
+            <div class="flex items-center"><span class="font-bold text-green-500 mx-2">+1</span>${deleteBtnHTML}</div></div>`;
+        } else {
+          li.classList.add('vikarma-card');
+          li.innerHTML = `<div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <i class="fas fa-leaf text-slate-400 mr-4" aria-hidden="true"></i>
+              <div><p class="font-semibold text-lg">${safeName}</p><p class="text-xs text-slate-400">${safeGoalName}</p></div>
+            </div>
+            <div class="flex items-center"><span class="font-bold text-red-500">-1</span><button class="log-vikarma-btn text-xs bg-red-500 text-white px-3 py-1 rounded-md mx-2" aria-label="Log negative action">Log</button>${deleteBtnHTML}</div></div>`;
+        }
+        dom.taskList.appendChild(li);
+      });
+    }
+
+    function renderBadges() {
+      dom.sidebarBadgeContainer.innerHTML = '';
+      badges.forEach(badge => {
+        const isUnlocked = Array.isArray(state.unlockedBadges) && state.unlockedBadges.includes(badge.name);
+        const badgeEl = document.createElement('div');
+        badgeEl.className = `badge p-2 rounded-lg cursor-pointer ${isUnlocked ? 'unlocked' : 'locked'}`;
+        badgeEl.title = isUnlocked ? `${badge.name} - Unlocked!` : `${badge.name} - Locked`;
+        badgeEl.dataset.badgeName = badge.name;
+        badgeEl.innerHTML = `<i class="fas ${badge.icon} text-3xl ${isUnlocked ? badge.color : 'text-slate-400'}" aria-hidden="true"></i>`;
+        dom.sidebarBadgeContainer.appendChild(badgeEl);
+      });
+    }
+
+    function updateStats() {
+      animateValue(dom.dailyKarmaScoreEl, state.dailyKarma || 0);
+      animateValue(dom.totalKarmaScoreEl, state.totalKarma || 0);
+      [dom.dailyKarmaScoreEl, dom.totalKarmaScoreEl].forEach(el => {
+        const value = parseInt(el.textContent) || 0;
+        el.classList.remove('karma-positive', 'karma-negative', 'karma-neutral');
+        if (value > 0) el.classList.add('karma-positive');
+        else if (value < 0) el.classList.add('karma-negative');
+        else el.classList.add('karma-neutral');
+      });
+    }
+
+    // --- Core Logic + hooks ---
+    function addGoal() {
+      const name = dom.goalNameInput.value.trim();
+      if (!name) { showMessage("Practice name cannot be empty.", "error"); return; }
+      state.goals.push({ id: makeId(), name, satatya: 0, totalPracticeKarma: 0, hadTasksToday: false, completedOneToday: false });
+      dom.goalNameInput.value = '';
+      saveState();
+    }
+
+    function openAddKarmaModal() {
+      if (state.goals.length === 0) { showMessage("Please create a Practice first.", "error"); return; }
+      dom.karmaGoalSelect.innerHTML = state.goals.map(g => `<option value="${String(g.id)}">${esc(g.name)}</option>`).join('');
+      dom.addKarmaForm.reset();
+      dom.addKarmaModal.classList.remove('hidden');
+    }
+
+    function handleAddKarma(e) {
+      e.preventDefault();
+      const goalId = String(dom.karmaGoalSelect.value);
+      const name = dom.addKarmaForm.querySelector('#karma-name').value.trim();
+      const type = dom.addKarmaForm.querySelector('#karma-type').value;
+      const remindAt = dom.addKarmaForm.querySelector('#karma-remind-at')?.value || null;
+      const deadlineAt = dom.addKarmaForm.querySelector('#karma-deadline-at')?.value || null;
+      if (!name) { showMessage("Action name is required.", "error"); return; }
+
+      const goal = state.goals.find(g => String(g.id) === goalId);
+      if (goal && type === 'karma') { goal.hadTasksToday = true; }
+
+      state.dailyActions.push({ id: makeId(), name, type, goalId, order: state.dailyActions.length, remindAt, deadlineAt });
+      dom.addKarmaModal.classList.add('hidden');
+      saveState();
+    }
+
+    function handleTaskClick(e) {
+      const fireOverlay = e.target.closest('.fire-overlay');
+      const logVikarmaBtn = e.target.closest('.log-vikarma-btn');
+      const deleteBtn = e.target.closest('.delete-task-btn');
+
+      if (fireOverlay) { handleKarmaCompletion(e); return; }
+      if (logVikarmaBtn) { handleVikarmaLog(e); return; }
+      if (deleteBtn) { handleDeleteTask(e); return; }
+
+      const karmaItem = e.target.closest('.karma-item');
+      if (!karmaItem) return;
+      const task = state.dailyActions.find(t => String(t.id) === String(karmaItem.dataset.id));
+      if (!task || task.type === 'vikarma' || task.type === 'prayashchit') return;
+
+      document.querySelectorAll('.fire-overlay').forEach(el => { if (el.parentElement !== karmaItem) el.remove(); });
+
+      if (karmaItem.querySelector('.fire-overlay')) {
+        karmaItem.querySelector('.fire-overlay').remove();
+      } else {
+        const newFireOverlay = document.createElement('div');
+        newFireOverlay.className = 'fire-overlay';
+        newFireOverlay.innerHTML = `<i class="fas fa-fire text-orange-500 text-4xl" aria-hidden="true"></i>`;
+        karmaItem.appendChild(newFireOverlay);
+      }
+    }
+
+    function handleKarmaCompletion(e) {
+      const karmaItem = e.target.closest('.karma-item'); if (!karmaItem) return;
+      const taskId = String(karmaItem.dataset.id);
+      const taskIndex = state.dailyActions.findIndex(t => String(t.id) === taskId);
+      if (taskIndex === -1) return;
+
+      const task = state.dailyActions[taskIndex];
+      const goal = state.goals.find(g => String(g.id) === String(task.goalId));
+
+      state.dailyKarma = (state.dailyKarma || 0) + 1;
+      state.metrics.completedPositiveToday = (state.metrics.completedPositiveToday || 0) + 1; // NEW
+      if (goal) { goal.totalPracticeKarma = (goal.totalPracticeKarma || 0) + 1; goal.completedOneToday = true; }
+
+      state.dailyActions.splice(taskIndex, 1);
+
+      try { dom.fireSound.currentTime = 0; dom.fireSound.play().catch(()=>{}); } catch(e){}
+      if (navigator.vibrate) navigator.vibrate(50);
+
+      karmaItem.classList.add('completed');
+      setTimeout(saveState, 500);
+    }
+
+    function handleVikarmaLog(e) {
+      const karmaItem = e.target.closest('.karma-item'); if (!karmaItem) return;
+      const taskId = String(karmaItem.dataset.id);
+      const taskIndex = state.dailyActions.findIndex(t => String(t.id) === taskId);
+      if (taskIndex === -1) return;
+
+      const task = state.dailyActions[taskIndex];
+      const goal = state.goals.find(g => String(g.id) === String(task.goalId));
+
+      state.dailyKarma = (state.dailyKarma || 0) - 1;
+      state.metrics.loggedNegativeToday = (state.metrics.loggedNegativeToday || 0) + 1; // NEW
+      if (goal) goal.totalPracticeKarma = (goal.totalPracticeKarma || 0) - 1;
+
+      state.dailyActions.splice(taskIndex, 1);
+
+      if (navigator.vibrate) navigator.vibrate([100, 30, 100]);
+
+      karmaItem.classList.add('completed');
+      setTimeout(saveState, 500);
+    }
+
+    function handleDeleteTask(e) {
+      const karmaItem = e.target.closest('.karma-item'); if (!karmaItem) return;
+      const taskId = String(karmaItem.dataset.id);
+      const task = state.dailyActions.find(t => String(t.id) === taskId);
+      if (!task) return;
+
+      if (task.type === 'vikarma') {
+        showMessage('Negative actions should be logged, not deleted.', 'error');
+        return;
+      }
+      // FIX: Do not decrement dailyKarma when deleting a positive task.
+      state.dailyActions = state.dailyActions.filter(t => String(t.id) !== taskId);
+      showMessage('Action removed.', 'info');
+      saveState();
+    }
+
+    function handleDeleteGoal(e) {
+      const goalId = String(e.target.closest('.delete-goal-btn').dataset.goalId);
+      openConfirmModal('Delete Practice?', 'This will remove the practice and any of its tasks for today. This cannot be undone.', () => {
+        state.goals = state.goals.filter(g => String(g.id) !== goalId);
+        state.dailyActions = state.dailyActions.filter(t => String(t.goalId) !== goalId);
+        showMessage('Practice removed.', 'info');
+        saveState();
+      });
+    }
+
+    // Existing end-of-day flow
+    function endDay() {
+      let finalDailyKarma = state.dailyKarma || 0;
+      const missedKarmas = state.dailyActions.filter(t => t.type === 'karma');
+      missedKarmas.forEach(() => { finalDailyKarma -= 1; });
+
+      state.goals.forEach(goal => {
+        if (goal.hadTasksToday && goal.completedOneToday) {
+          goal.satatya = (goal.satatya || 0) + 1;
+          badges.forEach(badge => {
+            if (goal.satatya >= badge.days && (!state.unlockedBadges || !state.unlockedBadges.includes(badge.name))) {
+              state.unlockedBadges = state.unlockedBadges || [];
+              state.unlockedBadges.push(badge.name);
+              setTimeout(() => showBadgeUnlockModal(badge), 500);
+            }
+          });
+        } else if (goal.hadTasksToday) {
+          goal.satatya = 0;
+        }
+      });
+
+      pendingFinalDailyKarma = finalDailyKarma;
+      // Summary will read metrics directly for breakdown
+      showSummaryModal(finalDailyKarma, missedKarmas.length);
+    }
+
+    function finalizeDay(finalDailyKarma, prayashchitChoice = null) {
+      state.totalKarma = (state.totalKarma || 0) + finalDailyKarma;
+      state.dailyKarma = 0;
+      state.dailyActions = [];
+      state.metrics = { completedPositiveToday: 0, loggedNegativeToday: 0 }; // reset metrics
+
+      state.goals.forEach(g => { g.hadTasksToday = false; g.completedOneToday = false; });
+
+      if (prayashchitChoice) {
+        state.dailyActions.push({ id: makeId(), name: prayashchitChoice, type: 'prayashchit', goalId: null, order: 0 });
+      }
+      pendingFinalDailyKarma = null;
+
+      // mark finalized with LOCAL date
+      state.lastFinalizedDate = localDateISO();
+      saveState();
+    }
+
+    // Drag/reorder
+    let draggedItem = null;
+    dom.taskList.addEventListener('dragstart', e => {
+      if (e.target.classList.contains('karma-item')) {
+        draggedItem = e.target;
+        setTimeout(() => e.target.classList.add('dragging'), 0);
+      }
+    });
+    dom.taskList.addEventListener('dragover', e => {
+      e.preventDefault();
+      const containerRect = dom.taskList.getBoundingClientRect();
+      const y = e.clientY;
+      if (y < containerRect.top + 50) { window.scrollBy(0, -15); }
+      else if (y > containerRect.bottom - 50) { window.scrollBy(0, 15); }
+
+      const afterElement = getDragAfterElement(dom.taskList, y);
+      if (afterElement == null) { dom.taskList.appendChild(draggedItem); }
+      else { dom.taskList.insertBefore(draggedItem, afterElement); }
+    });
+    dom.taskList.addEventListener('dragend', () => {
+      if (draggedItem) {
+        draggedItem.classList.remove('dragging');
+        draggedItem = null;
+        const newOrderedIds = [...dom.taskList.querySelectorAll('.karma-item')].map(item => String(item.dataset.id));
+        state.dailyActions.forEach(task => { task.order = newOrderedIds.indexOf(String(task.id)); });
+        saveState();
+      }
+    });
+    function getDragAfterElement(container, y) {
+      const draggableElements = [...container.querySelectorAll('.karma-item:not(.dragging)')];
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; }
+        else { return closest; }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    // Feedback
+    function showMessage(message, type = 'success') {
+      const box = document.getElementById('message-box');
+      box.textContent = message;
+      box.className = 'fixed bottom-16 right-5 p-4 text-sm rounded-lg shadow-lg z-50 ';
+      if (type === 'success') box.classList.add('bg-green-100', 'dark:bg-green-900', 'text-green-800', 'dark:text-green-200');
+      else if (type === 'error') box.classList.add('bg-red-100', 'dark:bg-red-900', 'text-red-800', 'dark:text-red-200');
+      else box.classList.add('bg-blue-100', 'dark:bg-blue-900', 'text-blue-800', 'dark:text-blue-200');
+      box.classList.remove('hidden');
+      setTimeout(() => box.classList.add('hidden'), 3000);
+    }
+
+    function animateValue(element, targetValue) {
+      const startValue = parseInt(element.textContent.replace(/,/g, '')) || 0;
+      if (startValue === targetValue) { element.textContent = targetValue; return; }
+      const duration = 300;
+      let startTime = null;
+      const step = (currentTime) => {
+        if (!startTime) startTime = currentTime;
+        const progress = Math.min((currentTime - startTime) / duration, 1);
+        element.textContent = Math.floor(progress * (targetValue - startValue) + startValue);
+        if (progress < 1) window.requestAnimationFrame(step);
+      };
+      window.requestAnimationFrame(step);
+    }
+
+    function showBadgeUnlockModal(badge) {
+      dom.badgeModalContent.innerHTML = `
+        <i class="fas ${badge.icon} text-6xl mb-4 ${badge.color} badge-ceremony-icon" aria-hidden="true"></i>
+        <h2 class="text-3xl font-bold">Badge Unlocked!</h2>
+        <p class="text-xl mt-2">${esc(badge.name)}</p>
+        <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${esc(badge.meaning)}"</p>
+        <button onclick="closeModal('badge-modal')" class="mt-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-semibold py-2 px-6 rounded-lg">Continue</button>`;
+      dom.badgeModal.classList.remove('hidden');
+    }
+
+    function showBadgeInfoModal(badge) {
+      dom.badgeModalContent.innerHTML = `
+        <i class="fas ${badge.icon} text-6xl mb-4 text-slate-400" aria-hidden="true"></i>
+        <h2 class="text-3xl font-bold">${esc(badge.name)}</h2>
+        <p class="text-slate-500 dark:text-slate-400 mt-2">Requires ${badge.days} days of Sātatya in a single practice to unlock.</p>
+        <p class="text-slate-500 dark:text-slate-400 mt-2 italic">"${esc(badge.meaning)}"</p>
+        <button onclick="closeModal('badge-modal')" class="mt-6 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-semibold py-2 px-6 rounded-lg">Close</button>`;
+      dom.badgeModal.classList.remove('hidden');
+    }
+
+    // ---- Summary (with breakdown) + flexible flow ----
+    function showSummaryModal(finalDailyKarma, missedCount, opts = {}) {
+      const title = opts.title || 'Day Complete';
+      const earned = (opts.earned != null) ? opts.earned : (state.metrics?.completedPositiveToday || 0);
+      const negatives = (opts.negatives != null) ? opts.negatives : (state.metrics?.loggedNegativeToday || 0);
+      const planned = earned + (missedCount || 0);
+
+      dom.summaryModalContent.innerHTML = `
+        <h2 class="text-3xl font-bold">${esc(title)}</h2>
+
+        <div class="mt-4 text-left bg-slate-100 dark:bg-slate-700 rounded-lg p-4">
+          <div class="flex justify-between"><span>Planned (positive)</span><span class="font-semibold">${planned}</span></div>
+          <div class="flex justify-between mt-1"><span>Earned (done)</span><span class="font-semibold karma-positive">+${earned}</span></div>
+          <div class="flex justify-between mt-1"><span>Missed (penalty)</span><span class="font-semibold karma-negative">-${missedCount || 0}</span></div>
+          <div class="flex justify-between mt-1"><span>Negatives logged</span><span class="font-semibold karma-negative">-${negatives}</span></div>
+          <hr class="my-3 border-slate-300 dark:border-slate-600">
+          <div class="flex justify-between text-lg">
+            <span>Final Karma</span>
+            <span class="font-bold ${finalDailyKarma >= 0 ? 'karma-positive' : 'karma-negative'}">${finalDailyKarma > 0 ? '+' : ''}${finalDailyKarma}</span>
+          </div>
+        </div>
+
+        <button id="close-summary-btn" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg">Continue</button>`;
+      dom.summaryModal.classList.remove('hidden');
+
+      document.getElementById('close-summary-btn').onclick = () => {
+        dom.summaryModal.classList.add('hidden');
+        if (typeof opts.onContinue === 'function') {
+          opts.onContinue();
+          return;
+        }
+        // Default: show prayashchit if negative, else finalize now
+        if (finalDailyKarma < 0) {
+          renderPrayashchitOptions();
+          dom.prayashchitModal.classList.remove('hidden');
+          setPrayashchitHandler(() => {
+            const selected = document.querySelector('input[name="prayashchit"]:checked');
+            const choice = selected ? selected.value : null;
+            closeModal('prayashchit-modal');
+            finalizeDay(finalDailyKarma, choice);
+          });
+        } else {
+          finalizeDay(finalDailyKarma);
+        }
+      };
+    }
+
+    function showSummaryOnlyQueued(ps) {
+      showSummaryModal(ps.finalDailyKarma, ps.missedCount, {
+        title: `Yesterday Complete (${ps.dateISO})`,
+        earned: ps.earned || 0,
+        negatives: ps.negatives || 0,
+        onContinue: () => {
+          // After acknowledging yesterday, ask for Prayashchit if needed (add to *today*)
+          if (state.pendingPrayashchit) {
+            renderPrayashchitOptions();
+            dom.prayashchitModal.classList.remove('hidden');
+            setPrayashchitHandler(() => {
+              const selected = document.querySelector('input[name="prayashchit"]:checked');
+              const choice = selected ? selected.value : null;
+              closeModal('prayashchit-modal');
+              if (choice) {
+                state.dailyActions.push({ id: makeId(), name: choice, type: 'prayashchit', goalId: null, order: 0 });
+              }
+              delete state.pendingPrayashchit;
+              saveState();
+            });
+          }
+        }
+      });
+    }
+
+    // --- Queued Summary state ---
+    function queueSummary({ finalDailyKarma, missedCount, dateISO, earned = 0, negatives = 0 }) {
+      state.pendingSummary = { finalDailyKarma, missedCount, dateISO, earned, negatives };
+      state.pendingPrayashchit = finalDailyKarma < 0;
+      saveState();
+    }
+
+    function maybeShowQueuedSummary() {
+      const ps = state.pendingSummary;
+      if (!ps) return;
+      // Show once, then clear
+      delete state.pendingSummary;
+      saveState();
+      showSummaryOnlyQueued(ps);
+    }
+
+    // Drag helpers etc already defined above...
+
+    function renderPrayashchitOptions() {
+      const allOptions = [...prayashchitList, ...(state.customPrayashchits || [])];
+      dom.prayashchitOptionsEl.innerHTML = '';
+      [...allOptions].sort(() => 0.5 - Math.random()).slice(0, 3).forEach((p, i) => {
+        const pSafe = esc(p);
+        dom.prayashchitOptionsEl.innerHTML += `<label class="flex items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-lg"><input type="radio" name="prayashchit" value="${pSafe}" class="mr-3" ${i===0 ? 'checked' : ''}>${pSafe}</label>`;
+      });
+    }
+
+    function addCustomPrayashchit() {
+      const newPrayashchit = dom.customPrayashchitInput.value.trim();
+      if (newPrayashchit && !(state.customPrayashchits || []).includes(newPrayashchit)) {
+        state.customPrayashchits = state.customPrayashchits || [];
+        state.customPrayashchits.push(newPrayashchit);
+        dom.customPrayashchitInput.value = '';
+        renderPrayashchitOptions();
+        saveState();
+      }
+    }
+
+    function handleResetKarma() {
+      openConfirmModal('Reset All Karma?', 'This will reset your Total Karma and all Practice Karma scores to zero. This cannot be undone.', () => {
+        state.totalKarma = 0;
+        state.goals.forEach(g => g.totalPracticeKarma = 0);
+        showMessage('Your accumulated Karma has been reset.', 'info');
+        saveState();
+      });
+    }
+
+    function openConfirmModal(title, text, onConfirm) {
+      dom.confirmModalTitle.textContent = title;
+      dom.confirmModalText.textContent = text;
+      dom.confirmModal.classList.remove('hidden');
+      confirmAction = onConfirm;
+    }
+
+    function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
+
+    function toggleSidebar(show) {
+      if (show) { dom.sidebar.classList.remove('-translate-x-full'); dom.sidebarOverlay.classList.remove('hidden'); }
+      else { dom.sidebar.classList.add('-translate-x-full'); dom.sidebarOverlay.classList.add('hidden'); }
+    }
+
+    // ----- Prayashchit handler manager (avoid double handlers) -----
+    function setPrayashchitHandler(fn){
+      dom.acceptPrayashchitBtn.onclick = null;
+      dom.acceptPrayashchitBtn.onclick = fn;
+    }
+
+    // --- Settings UI init/bind ---
+    function initSettingsUI(){
+      const s = state.settings || defaultState.settings;
+      dom.remindersToggle.checked = !!s.remindersEnabled;
+      dom.pushToggle.checked = !!s.pushRemindersEnabled;
+      dom.endDayTimeInput.value = s.endDayTime || "22:30";
+      dom.autoFinalizeInput.value = s.autoFinalizeAfterMins ?? 30;
+    }
+    function bindSettingsEvents(){
+      dom.remindersToggle.addEventListener('change', () => {
+        state.settings.remindersEnabled = dom.remindersToggle.checked; saveState();
+      });
+      dom.pushToggle.addEventListener('change', async () => {
+        if (dom.pushToggle.checked) {
+          const ok = await ensurePushPermission();
+          state.settings.pushRemindersEnabled = !!ok;
+          dom.pushToggle.checked = !!ok;
+        } else {
+          state.settings.pushRemindersEnabled = false;
+        }
+        saveState();
+      });
+      dom.endDayTimeInput.addEventListener('change', () => {
+        state.settings.endDayTime = dom.endDayTimeInput.value || "22:30"; saveState();
+      });
+      dom.autoFinalizeInput.addEventListener('change', () => {
+        const v = parseInt(dom.autoFinalizeInput.value, 10);
+        state.settings.autoFinalizeAfterMins = isNaN(v) ? 30 : Math.max(5, v); saveState();
+      });
+    }
+    bindSettingsEvents();
+
+    // --- Foreground Reminder Scheduler ---
+    let schedulerTimer = null;
+    let alreadyReminded = new Set();
+    function scheduleForegroundReminders(){
+      if (schedulerTimer) clearInterval(schedulerTimer);
+      schedulerTimer = setInterval(checkDueReminders, 30 * 1000);
+      checkDueReminders();
+    }
+    function parseHM(hm){
+      if (!hm) return null;
+      const [h,m] = hm.split(':').map(Number);
+      const d = new Date();
+      d.setHours(h||0, m||0, 0, 0);
+      return d;
+    }
+    function markKey(id, kind){ return `${id}:${kind}:${new Date().toDateString()}`; }
+    async function checkDueReminders(){
+      const s = state.settings || {};
+      if (!s.remindersEnabled) return;
+      const now = Date.now();
+
+      // task reminders
+      (state.dailyActions || []).forEach(t => {
+        if (t.type !== 'karma') return;
+        const r = parseHM(t.remindAt);
+        if (!r) return;
+        const key = markKey(t.id, 'remind');
+        if (!alreadyReminded.has(key) && Math.abs(now - r.getTime()) < 60*1000) {
+          alreadyReminded.add(key);
+          vibrateSoft();
+          showMessage(`Reminder: ${t.name}`, 'info');
+          maybeNotify(`Reminder: ${t.name}`, `Do it before ${t.deadlineAt || 'deadline'}`);
+        }
+      });
+
+      // end-day reminder
+      const edt = parseHM((state.settings||{}).endDayTime);
+      if (edt) {
+        const endKey = markKey('endday','remind');
+        if (!alreadyReminded.has(endKey) && Math.abs(now - edt.getTime()) < 60*1000) {
+          alreadyReminded.add(endKey);
+          vibrateSoft();
+          showMessage('Time to wrap up your day. Review & complete tasks.', 'info');
+          maybeNotify('Day Wrap-Up', 'Review today’s tasks now.');
+          state._autoFinalizeAt = edt.getTime() + (state.settings.autoFinalizeAfterMins||30)*60*1000;
+          saveState();
+        }
+
+        // auto finalize if overdue and not done yet
+        const todayLocal = localDateISO();
+        if (state.lastFinalizedDate !== todayLocal && state._autoFinalizeAt && now >= state._autoFinalizeAt){
+          const missedKarmas = state.dailyActions.filter(t => t.type === 'karma');
+          let finalDailyKarma = (state.dailyKarma || 0) - missedKarmas.length;
+
+          // queue a summary for "today" (being finalized now)
+          queueSummary({
+            finalDailyKarma,
+            missedCount: missedKarmas.length,
+            dateISO: todayLocal,
+            earned: state.metrics?.completedPositiveToday || 0,
+            negatives: state.metrics?.loggedNegativeToday || 0
+          });
+
+          finalizeDay(finalDailyKarma);
+          state.lastFinalizedDate = todayLocal;
+          delete state._autoFinalizeAt;
+          saveState();
+          showMessage('Day auto-finalized.', 'success');
+          maybeNotify('Day finalized', `Final karma: ${finalDailyKarma >= 0 ? '+' : ''}${finalDailyKarma}`);
+
+          // surface it right away if app is open
+          maybeShowQueuedSummary();
+        }
+      }
+    }
+    function vibrateSoft(){ try{ if(navigator.vibrate) navigator.vibrate([30,30,30]); }catch(e){} }
+    async function maybeNotify(title, body){
+      try{
+        if (!('Notification' in window)) return;
+        if (Notification.permission === 'granted') {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg) reg.showNotification(title, { body, icon: '/icons/icon-192x192.png' });
+          else new Notification(title, { body });
+        }
+      }catch(e){}
+    }
+
+    // --- Resume safety net (finalize missed day) ---
+    function maybeFinalizeMissedDay(){
+      const todayLocal = localDateISO();
+      if (state.lastFinalizedDate !== todayLocal){
+        const missedKarmas = state.dailyActions.filter(t => t.type === 'karma');
+        let finalDailyKarma = (state.dailyKarma || 0) - missedKarmas.length;
+
+        // infer "yesterday" as last finalized or yesterday date
+        const y = state.lastFinalizedDate || localDateISO(new Date(Date.now() - 86400000));
+
+        // queue yesterday’s summary BEFORE we wipe lists
+        queueSummary({
+          finalDailyKarma,
+          missedCount: missedKarmas.length,
+          dateISO: y,
+          earned: state.metrics?.completedPositiveToday || 0,
+          negatives: state.metrics?.loggedNegativeToday || 0
+        });
+
+        finalizeDay(finalDailyKarma);
+        state.lastFinalizedDate = todayLocal;
+        saveState();
+        showMessage('Finalized previous day on resume.', 'info');
+
+        // show the queued summary immediately
+        maybeShowQueuedSummary();
+      }
+    }
+
+    // --- Push (optional) ---
+    async function ensurePushPermission(){
+      try{
+        if (!('Notification' in window)) { showMessage('Notifications not supported on this device.', 'error'); return false; }
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') { showMessage('Notifications permission denied.', 'error'); return false; }
+        if (!messaging) messaging = firebase.messaging();
+        const reg = await navigator.serviceWorker.ready;
+        const token = await messaging.getToken({
+          vapidKey: 'BCoF7_yJ4AcT_dyf98XjeZ8H8X3IxRmynPLGddqOsj6TcSO5Xni5Bx7nYS1FOZDzG1f03VPJ6JUXUqZ2yd_GpFs',
+          serviceWorkerRegistration: reg
+        });
+        const uid = auth.currentUser?.uid;
+        if (uid && token) await db.collection('users').doc(uid).set({ fcmToken: token }, { merge: true });
+        showMessage('Push reminders enabled.', 'success');
+        return true;
+      }catch(e){ console.error(e); showMessage(e.message || 'Push set-up failed.', 'error'); return false; }
+    }
+
+    // --- Diary / Notes ---
+    function watchNotes(){
+      if (notesUnsub) notesUnsub();
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+      notesUnsub = db.collection('users').doc(uid).collection('notes')
+        .orderBy('createdAt','desc')
+        .onSnapshot(snap => {
+          const list = [];
+          snap.forEach(d => list.push({ id:d.id, ...d.data() }));
+          renderNotes(list);
+        }, (err) => {
+          console.error('notes listener error:', err);
+          showMessage('Cannot load notes: ' + (err.message || err), 'error');
+        });
+    }
+    function renderNotes(list){
+      const el = dom.notesList;
+      el.innerHTML = '';
+      if (!list.length) { el.innerHTML = `<p class="text-slate-500 italic">No notes yet.</p>`; return; }
+      list.forEach(n => {
+        const ts = n.createdAt?.toDate?.() || (n.createdAt ? new Date(n.createdAt) : new Date());
+        el.innerHTML += `
+          <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow">
+            <div class="flex items-center justify-between">
+              <p class="font-semibold">${esc(n.title||'Untitled')}</p>
+              <span class="text-xs text-slate-400">${ts.toLocaleString()}</span>
+            </div>
+            <p class="mt-2 whitespace-pre-wrap">${esc(n.body||'')}</p>
+            ${n.audioUrl ? `<audio class="mt-2 w-full" controls src="${esc(n.audioUrl)}"></audio>` : ''}
+          </div>`;
+      });
+    }
+    async function saveNote({title, body, audioBlob}){
+      const uid = auth.currentUser?.uid; if (!uid) { showMessage('Not signed in.', 'error'); return; }
+      try {
+        let audioUrl = null;
+        if (audioBlob){
+          const mime = audioBlob.type || 'audio/webm';
+          const ext =
+            mime.includes('mp4') ? 'm4a' :
+            mime.includes('mpeg') ? 'mp3' :
+            'webm';
+
+          const path = `notes/${uid}/${Date.now()}.${ext}`;
+          const ref = storage.ref().child(path);
+          await ref.put(audioBlob, { contentType: mime });
+          audioUrl = await ref.getDownloadURL();
+        }
+
+        await db.collection('users').doc(uid).collection('notes').add({
+          title: title || '',
+          body: body || '',
+          audioUrl,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showMessage('Note saved.', 'success');
+      } catch (e) {
+        console.error('saveNote error:', e);
+        showMessage('Failed to save note: ' + (e.message || e), 'error');
+      }
+    }
+
+    // Dictation (start/stop)
+    let _sr = null;
+    dom.btnDictate.onclick = () => {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!_sr) {
+        if (!SR) { showMessage('Speech recognition not supported. Use Record instead.', 'error'); return; }
+        _sr = new SR();
+        _sr.continuous = true;
+        _sr.interimResults = true;
+        _sr.lang = 'en-IN';
+        _sr.onresult = (ev) => {
+          let txt = '';
+          for (let i = ev.resultIndex; i < ev.results.length; i++){ txt += ev.results[i][0].transcript; }
+          dom.noteBody.value = txt;
+        };
+        _sr.onend = () => { showMessage('Dictation ended.', 'info'); _sr = null; };
+        _sr.onerror = (e) => { console.error('speech error', e); showMessage('Speech error.', 'error'); _sr = null; };
+        _sr.start();
+        showMessage('Dictating... tap again to stop.', 'info');
+      } else {
+        try { _sr.stop(); } catch(_) {}
+      }
+    };
+
+    // Recording (cross-browser)
+    let rec, chunks = [];
+    let currentMime = '';
+    let currentExt = '';
+    function pickSupportedMime(){
+      const candidates = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/mpeg'
+      ];
+      for (const m of candidates) {
+        if (window.MediaRecorder && typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(m)) {
+          return m;
+        }
+      }
+      return '';
+    }
+
+    dom.btnRecord.onclick = async () => {
+      if (rec && rec.state === 'recording') {
+        try { rec.stop(); } catch(_) {}
+        return;
+      }
+      if (!window.MediaRecorder) {
+        showMessage('Recording not supported on this browser. Use Dictate or type.', 'error');
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        chunks = [];
+
+        currentMime = pickSupportedMime();
+        currentExt =
+          currentMime.includes('mp4') ? 'm4a' :
+          currentMime.includes('mpeg') ? 'mp3' :
+          'webm';
+
+        rec = currentMime ? new MediaRecorder(stream, { mimeType: currentMime }) : new MediaRecorder(stream);
+
+        rec.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+        rec.onstop = async () => {
+          try {
+            const type = currentMime || 'audio/webm';
+            const blob = new Blob(chunks, { type });
+            await saveNote({
+              title: dom.noteTitle.value.trim(),
+              body: dom.noteBody.value.trim(),
+              audioBlob: blob
+            });
+          } catch (e) {
+            console.error('onstop save error:', e);
+            showMessage('Could not save recording: ' + (e.message || e), 'error');
+          } finally {
+            stream.getTracks().forEach(t => t.stop());
+          }
+        };
+
+        rec.start();
+        showMessage(`Recording... tap again to stop (${currentExt || 'audio'})`, 'info');
+      } catch (e) {
+        console.error('getUserMedia error:', e);
+        showMessage('Mic permission denied or unavailable.', 'error');
+      }
+    };
+
+    dom.btnSaveNote.onclick = () => saveNote({ title: dom.noteTitle.value.trim(), body: dom.noteBody.value.trim() });
+
+    // Tabs
+    function switchView(name){
+      dom.viewTasks.classList.toggle('hidden', name!=='tasks');
+      dom.viewDiary.classList.toggle('hidden', name!=='diary');
+    }
+    dom.tabTasks.onclick = () => switchView('tasks');
+    dom.tabDiary.onclick = () => switchView('diary');
+
+    // Gita quote
+    let _gitaShown = false;
+    function showGitaQuoteOnce(){
+      if (_gitaShown) return;
+      const q = gitaQuotes[Math.floor(Math.random()*gitaQuotes.length)];
+      dom.gitaQuoteEl.textContent = q;
+      _gitaShown = true;
+    }
+
+    // --- Quick Ad-hoc Vikarma ---
+    function quickLogVikarma() {
+      const name = (prompt('What happened? (optional description)') || '').trim();
+
+      // Optional: attribute to a practice by number
+      let goalId = null;
+      if (state.goals && state.goals.length) {
+        const options = state.goals.map((g, i) => `${i+1}. ${g.name}`).join('\n');
+        const pick = prompt(`Attribute to a practice? Enter number or leave blank:\n${options}`);
+        const idx = parseInt(pick, 10);
+        if (!isNaN(idx) && idx >= 1 && idx <= state.goals.length) {
+          goalId = String(state.goals[idx - 1].id);
+        }
+      }
+
+      // Apply effects
+      state.dailyKarma = (state.dailyKarma || 0) - 1;
+      state.metrics = state.metrics || { completedPositiveToday: 0, loggedNegativeToday: 0 };
+      state.metrics.loggedNegativeToday = (state.metrics.loggedNegativeToday || 0) + 1;
+
+      if (goalId) {
+        const goal = state.goals.find(g => String(g.id) === goalId);
+        if (goal) goal.totalPracticeKarma = (goal.totalPracticeKarma || 0) - 1;
+      }
+
+      // Optional visible record
+      if (name) {
+        state.dailyActions.push({
+          id: makeId(),
+          name: `Vikarma: ${name}`,
+          type: 'vikarma',
+          goalId,
+          order: state.dailyActions.length
+        });
+      }
+
+      showMessage('Vikarma logged.', 'info');
+      saveState();
+    }
+
+    // Events
+    dom.googleSigninBtn.addEventListener('click', () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(err => {
+        if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+          auth.signInWithRedirect(provider);
+        } else { showMessage(err.message, 'error'); }
+      });
+    });
+    dom.googleRedirectFallback.addEventListener('click', (e) => { e.preventDefault(); const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithRedirect(provider); });
+
+    dom.emailSignupBtn.addEventListener('click', () => { auth.createUserWithEmailAndPassword(dom.emailInput.value, dom.passwordInput.value).catch(e => showMessage(e.message, 'error')); });
+    dom.emailSigninBtn.addEventListener('click', () => { auth.signInWithEmailAndPassword(dom.emailInput.value, dom.passwordInput.value).catch(e => showMessage(e.message, 'error')); });
+    dom.forgotPasswordBtn.addEventListener('click', async () => {
+      const email = dom.emailInput.value.trim();
+      if (!email) { showMessage('Enter your email above first.', 'error'); return; }
+      try { await auth.sendPasswordResetEmail(email); showMessage('Password reset email sent.', 'success'); }
+      catch (e) { showMessage(e.message, 'error'); }
+    });
+    dom.signoutBtn.addEventListener('click', () => auth.signOut());
+    dom.menuBtn.addEventListener('click', () => toggleSidebar(true));
+    dom.sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
+    dom.addGoalBtn.addEventListener('click', addGoal);
+    dom.sidebarGoalList.addEventListener('click', (e) => { if(e.target.closest('.delete-goal-btn')) handleDeleteGoal(e); });
+    dom.addKarmaBtn.addEventListener('click', openAddKarmaModal);
+    dom.addKarmaForm.addEventListener('submit', handleAddKarma);
+    dom.cancelAddKarmaBtn.addEventListener('click', () => closeModal('add-karma-modal'));
+    dom.taskList.addEventListener('click', handleTaskClick);
+    dom.resetDayBtn.addEventListener('click', endDay); // kept for safety, but button is hidden
+    dom.resetKarmaBtn.addEventListener('click', handleResetKarma);
+    dom.sidebarBadgeContainer.addEventListener('click', e => {
+      const badgeEl = e.target.closest('.badge');
+      if (!badgeEl) return;
+      const badge = badges.find(b => b.name === badgeEl.dataset.badgeName);
+      if (!badge) return;
+      if (badgeEl.classList.contains('unlocked')) { showBadgeUnlockModal(badge); } else { showBadgeInfoModal(badge); }
+    });
+    dom.addCustomPrayashchitBtn.addEventListener('click', addCustomPrayashchit);
+
+    // NOTE: We do NOT keep a global acceptPrayashchit handler anymore; we set it per-flow via setPrayashchitHandler(...)
+
+    document.getElementById('quick-log-vikarma-btn').addEventListener('click', quickLogVikarma);
+
+    dom.confirmModalCancelBtn.addEventListener('click', () => closeModal('confirm-modal'));
+    dom.confirmModalConfirmBtn.addEventListener('click', () => {
+      if (typeof confirmAction === 'function') { confirmAction(); }
+      closeModal('confirm-modal');
+    });
+    document.addEventListener('click', e => { if (e.target.id === 'badge-modal') closeModal('badge-modal'); });
+    dom.themeToggleBtn.addEventListener('click', () => setTheme(!document.documentElement.classList.contains('dark')));
+
+  </script>
+
+ <!-- PWA Service Worker and Install Prompt -->
+<script>
+  const SW_PATH = './service-worker.js'; // adjust if you renamed it
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+      try {
+        const reg = await navigator.serviceWorker.register(SW_PATH);
+        console.log('SW registered:', reg);
+
+        // If there's an updated worker waiting, activate it immediately.
+        if (reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+
+        // When a new worker is found, ask it to skip waiting as soon as it's installed.
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              nw.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+
+        // When the controller changes (new SW takes control), reload to get fresh assets.
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          // avoid infinite loop: reload once
+          if (!window.__reloadedForSW) {
+            window.__reloadedForSW = true;
+            window.location.reload();
+          }
+        });
+      } catch (err) {
+        console.log('ServiceWorker registration failed: ', err);
+      }
+    });
+  }
+
+  // Install prompt handling
+  let deferredPrompt;
+  const installBtn = document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+  });
+  installBtn.addEventListener('click', async () => {
+    installBtn.style.display = 'none';
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+    }
+  });
+  window.addEventListener('appinstalled', () => {
+    installBtn.style.display = 'none';
+    deferredPrompt = null;
+  });
 </script>
 
 </body>
