@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Journal — Karmyog</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script> tailwind.config = { darkMode: 'class' } </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    body{font-family:'Inter',sans-serif;background:#fff;color:#0f172a;}
+    main{display:grid; grid-template-columns:1fr 280px; height:calc(100dvh - 56px);}
+    textarea{width:100%; height:100%; padding:18px; border:0; outline:0; font-size:16px; line-height:1.6; resize:none; background:#fff; color:#0f172a;}
+    aside{border-left:1px solid #e5e7eb; overflow:auto; background:#fff;}
+    .aside-head{position:sticky; top:0; background:#fff; border-bottom:1px solid #e5e7eb; padding:10px 12px; font-weight:700;}
+    .note-item{width:100%; text-align:left; padding:10px 12px; border:0; background:transparent; border-bottom:1px solid #f2f2f2; cursor:pointer;}
+    .note-item .date{font-size:12px; opacity:.7;}
+    .note-item .preview{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    @media (max-width: 820px){
+      main{grid-template-columns:1fr;}
+      aside{display:none;}
+    }
+  </style>
+</head>
+<body>
+  <header class="h-14 border-b flex items-center gap-2 px-3">
+    <a href="index.html" class="px-2 py-1 rounded hover:bg-slate-100" aria-label="Back">←</a>
+    <h1 class="text-base font-semibold">Journal</h1>
+
+    <div class="ml-auto flex items-center gap-2">
+      <span id="status" class="text-xs px-2 py-1 rounded bg-slate-100">Saved</span>
+      <button id="save-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-3 py-1.5 rounded">Save</button>
+
+      <span id="date-label" class="ml-2 text-sm text-slate-700">—</span>
+      <label class="relative inline-flex items-center px-2 py-1 rounded border border-slate-300 hover:bg-slate-50 cursor-pointer" title="Go to date">
+        <span>📅</span>
+        <input id="date-input" type="date" class="absolute inset-0 opacity-0 cursor-pointer"/>
+      </label>
+    </div>
+  </header>
+
+  <main>
+    <textarea id="editor" placeholder="Write your daily journal…"></textarea>
+    <aside>
+      <div class="aside-head">Previous notes</div>
+      <div id="list"></div>
+    </aside>
+  </main>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig={apiKey:"AIzaSyA1YxzDZzzyIuAxjxzo_Vy3d8CLtHoBK44",authDomain:"karmyog.life",projectId:"karmyog-6da5f",storageBucket:"karmyog-6da5f.firebasestorage.app",messagingSenderId:"331203556277",appId:"1:331203556277:web:b087b49debac40eeb6dffc",measurementId:"G-316W8DPVBN"};
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db=firebase.firestore(), auth=firebase.auth();
+
+    const dom={
+      dateInput:document.getElementById('date-input'),
+      dateLabel:document.getElementById('date-label'),
+      editor:document.getElementById('editor'),
+      list:document.getElementById('list'),
+      saveBtn:document.getElementById('save-btn'),
+      status:document.getElementById('status')
+    };
+
+    const LOCAL_KEY='journal-local';
+    const isoToday=()=> new Date().toLocaleDateString('en-CA');
+
+    function setStatus(s,cls){
+      dom.status.textContent=s;
+      dom.status.className='text-xs px-2 py-1 rounded '+(cls||'bg-slate-100');
+    }
+
+    function setDateUI(dateStr){
+      dom.dateInput.value=dateStr;
+      dom.dateLabel.textContent=new Date(dateStr).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+      document.title = `Journal — ${dateStr}`;
+    }
+
+    async function loadEntry(dateStr){
+      const uid=auth.currentUser?.uid;
+      if(uid){
+        const doc=await db.collection('users').doc(uid).collection('journal').doc(dateStr).get();
+        dom.editor.value = doc.exists ? (doc.data().content||'') : '';
+      }else{
+        const map=JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}');
+        dom.editor.value = map[dateStr]?.content || '';
+      }
+      setStatus('Saved');
+    }
+
+    async function persist(date, content){
+      const uid=auth.currentUser?.uid;
+      if(uid){
+        await db.collection('users').doc(uid).collection('journal').doc(date).set({
+          content, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        },{merge:true});
+      }else{
+        const map=JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}');
+        map[date]={content, updatedAt: Date.now()};
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(map));
+      }
+    }
+
+    async function saveEntry(){
+      const date=dom.dateInput.value||isoToday();
+      const content=dom.editor.value;
+      try{
+        setStatus('Saving…','bg-blue-100');
+        await persist(date, content);
+        upsertListItem(date, content);
+        setStatus('Saved','bg-emerald-100');
+      }catch(e){
+        console.error(e);
+        setStatus('Error','bg-red-100');
+        alert('Failed to save. Please check your connection.');
+      }
+    }
+
+    dom.saveBtn.addEventListener('click', saveEntry);
+
+    // Autosave on idle type
+    let t=null;
+    dom.editor.addEventListener('input', ()=>{
+      setStatus('Typing…','bg-slate-100');
+      if(t) clearTimeout(t);
+      t=setTimeout(saveEntry, 600);
+    });
+
+    // List
+    async function loadList(){
+      dom.list.innerHTML='';
+      const uid=auth.currentUser?.uid;
+      if(uid){
+        const snap=await db.collection('users').doc(uid).collection('journal').orderBy('updatedAt','desc').limit(200).get();
+        if(snap.empty){ dom.list.innerHTML='<p class="px-3 py-3 text-slate-500 italic">No notes yet.</p>'; return; }
+        snap.forEach(d=> addListItem(d.id,(d.data().content||'').trim()));
+      }else{
+        const map=JSON.parse(localStorage.getItem(LOCAL_KEY)||'{}');
+        const entries=Object.entries(map).sort((a,b)=> b[0].localeCompare(a[0]));
+        if(!entries.length){ dom.list.innerHTML='<p class="px-3 py-3 text-slate-500 italic">No notes yet.</p>'; return; }
+        entries.forEach(([date,rec])=> addListItem(date,(rec.content||'').trim()));
+      }
+    }
+    function addListItem(date, content){
+      const btn=document.createElement('button');
+      btn.className='note-item';
+      btn.innerHTML=`<div class="date">${date}</div><div class="preview">${content||'(empty)'}</div>`;
+      btn.addEventListener('click', async ()=>{ setDateUI(date); await loadEntry(date); });
+      dom.list.appendChild(btn);
+    }
+    function upsertListItem(date, content){
+      const items=[...dom.list.querySelectorAll('.note-item')];
+      const existing=items.find(el=>el.querySelector('.date')?.textContent===date);
+      if(existing){
+        existing.querySelector('.preview').textContent = content || '(empty)';
+        dom.list.prepend(existing);
+      }else{
+        addListItem(date, content);
+        const all=[...dom.list.children];
+        all.sort((a,b)=> b.querySelector('.date').textContent.localeCompare(a.querySelector('.date').textContent));
+        all.forEach(el=>dom.list.appendChild(el));
+      }
+    }
+
+    dom.dateInput.addEventListener('change', async (e)=>{ const d=e.target.value||isoToday(); setDateUI(d); await loadEntry(d); });
+
+    // Init
+    auth.onAuthStateChanged(async ()=>{
+      const d=isoToday();
+      setDateUI(d);
+      await loadEntry(d);
+      await loadList();
+    });
+  </script>
+</body>
+</html>
