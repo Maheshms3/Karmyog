@@ -2,8 +2,8 @@
 importScripts('https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.6.7/firebase-messaging-compat.js');
 
-const STATIC_CACHE = 'karmyog-static-v3';
-const ASSET_CACHE  = 'karmyog-assets-v3';
+const STATIC_CACHE = 'karmyog-static-v4';
+const ASSET_CACHE  = 'karmyog-assets-v4';
 
 // Precache only small, stable essentials
 const PRECACHE = [
@@ -13,24 +13,53 @@ const PRECACHE = [
   '/icons/icon-512x512.png'
 ];
 
-// Copy your firebaseConfig from index.html here
+// Firebase config — must match index.html
 const firebaseConfig = {
-    apiKey: "AIzaSyA1YxzDZzzyIuAxjxzo_Vy3d8CLtHoBK44",
-    authDomain: "karmyog.life",
-    projectId: "karmyog-6da5f",
-    storageBucket: "karmyog-6da5f.appspot.com",
-    messagingSenderId: "331203556277",
-    appId: "1:331203556277:web:b087b49debac40eeb6dffc",
-    measurementId: "G-316W8DPVBN"
+  apiKey: "AIzaSyA1YxzDZzzyIuAxjxzo_Vy3d8CLtHoBK44",
+  authDomain: "karmyog.life",
+  projectId: "karmyog-6da5f",
+  // IMPORTANT: use the firebasestorage.app bucket (matches index.html)
+  storageBucket: "karmyog-6da5f.firebasestorage.app",
+  messagingSenderId: "331203556277",
+  appId: "1:331203556277:web:b087b49debac40eeb6dffc",
+  measurementId: "G-316W8DPVBN"
 };
 
 firebase.initializeApp(firebaseConfig);
-const messaging = firebase.messaging();
+
+// Guard: messaging may not be supported on all browsers/contexts
+let messaging = null;
+try {
+  messaging = firebase.messaging();
+} catch (_) {
+  // no-op; push will just be disabled
+}
 
 // Utility to check same-origin
 const sameOrigin = (url) =>
   new URL(url, self.location.origin).origin === self.location.origin;
 
+// Optional: enable navigation preload for faster first paint
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    // Clean old caches
+    const keys = await caches.keys();
+    await Promise.all(
+      keys
+        .filter((k) => ![STATIC_CACHE, ASSET_CACHE].includes(k))
+        .map((k) => caches.delete(k))
+    );
+
+    // Enable navigation preload if available
+    if ('navigationPreload' in self.registration) {
+      try { await self.registration.navigationPreload.enable(); } catch(_) {}
+    }
+
+    await self.clients.claim();
+  })());
+});
+
+// Basic install: precache tiny essentials
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE))
@@ -38,19 +67,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((k) => ![STATIC_CACHE, ASSET_CACHE].includes(k))
-          .map((k) => caches.delete(k))
-      )
-    )
-  );
-  self.clients.claim();
-});
-
+// SPA + SEO-friendly fetch handler
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
@@ -59,82 +76,104 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  // Always bypass cache for sitemap/robots to avoid serving stale content
+  // Always bypass cache for sitemap/robots to avoid stale SEO files
   if (url.pathname === '/sitemap.xml' || url.pathname === '/robots.txt') {
-    return event.respondWith(fetch(req));
+    event.respondWith(fetch(req));
+    return;
   }
 
-  // Navigation requests (HTML) -> network first, fallback to cached index if offline
+  // Handle navigations with network-first (with preload) and offline fallback
   if (req.mode === 'navigate') {
-    return event.respondWith(
-      fetch(req)
-        .then(async (res) => {
-          // Store a snapshot of index.html for offline fallback (without precaching HTML)
-          try {
-            const clone = res.clone();
-            // Cache under a stable key so fallback always finds it
-            const cache = await caches.open(STATIC_CACHE);
-            // Prefer caching canonical index if path is root or any SPA route
-            await cache.put('/index.html', clone);
-          } catch (_) { /* ignore */ }
-          return res;
-        })
-        .catch(async () => {
-          // Fallback to cached index.html if available
-          const cache  = await caches.open(STATIC_CACHE);
-          const cached = await cache.match('/index.html');
-          return cached || Response.error();
-        })
-    );
+    event.respondWith((async () => {
+      try {
+        // Try preload first (if enabled), else network
+        const preload = await event.preloadResponse;
+        const res = preload || await fetch(req);
+
+        // Cache a fresh snapshot of index.html for future offline navigations
+        try {
+          const clone = res.clone();
+          const cache = await caches.open(STATIC_CACHE);
+          await cache.put('/index.html', clone);
+        } catch (_) { /* ignore */ }
+
+        return res;
+      } catch (_) {
+        // Offline fallback to last known index.html
+        const cache = await caches.open(STATIC_CACHE);
+        const cached = await cache.match('/index.html');
+        return cached || Response.error();
+      }
+    })());
+    return;
   }
 
-  // For same-origin static assets (CSS/JS/images), do stale-while-revalidate
+  // For same-origin static assets (CSS/JS/images), use stale-while-revalidate
   if (sameOrigin(req.url)) {
-    // Don’t try to cache HTML documents here; handled by the navigate branch above
+    // Don’t handle HTML here; it’s covered by the navigate branch above
     const accept = req.headers.get('accept') || '';
     const isHTML = accept.includes('text/html');
-    if (isHTML) return; // let the navigate handler deal with it
+    if (isHTML) return;
 
-    return event.respondWith(
-      caches.open(ASSET_CACHE).then(async (cache) => {
-        const cached = await cache.match(req);
+    event.respondWith((async () => {
+      const cache = await caches.open(ASSET_CACHE);
+      const cached = await cache.match(req);
 
-        const networkFetch = fetch(req)
-          .then((res) => {
-            // Only cache successful, basic responses
-            if (res && res.status === 200 && (res.type === 'basic' || res.type === 'cors')) {
-              cache.put(req, res.clone());
-            }
-            return res;
-          })
-          .catch(() => undefined);
+      const networkFetch = fetch(req)
+        .then((res) => {
+          // Only cache successful, basic/cors responses
+          if (res && res.status === 200 && (res.type === 'basic' || res.type === 'cors')) {
+            cache.put(req, res.clone());
+          }
+          return res;
+        })
+        .catch(() => undefined);
 
-        // Return cached immediately if present; update in background
-        return cached || networkFetch || fetch(req);
-      })
-    );
+      // Serve cached immediately, update in background when possible
+      return cached || networkFetch || fetch(req);
+    })());
+    return;
   }
+
+  // For cross-origin requests, default to network (let the browser handle)
+  // You can add specific strategies here if you need (e.g., fonts CDN).
 });
 
-// Push notifications - now using the Firebase SDK
-messaging.onBackgroundMessage((payload) => {
-  console.log('Received background message ', payload);
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: payload.notification.icon || '/icons/icon-192x192.png',
-    badge: '/icons/icon-192x192.png'
-  };
+// Push notifications (Firebase)
+if (messaging && typeof messaging.onBackgroundMessage === 'function') {
+  messaging.onBackgroundMessage((payload) => {
+    // Defensive checks
+    const n = payload && payload.notification || {};
+    const title = n.title || 'Karmyog';
+    const options = {
+      body: n.body || '',
+      icon: n.icon || '/icons/icon-192x192.png',
+      badge: '/icons/icon-192x192.png',
+      // Optionally include click_action if sent, otherwise handle in notificationclick
+      data: { click_action: n.click_action || '/' }
+    };
+    self.registration.showNotification(title, options);
+  });
+}
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
-});
-
+// Notification click → focus existing tab or open /
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
-      for (const c of list) { if ('focus' in c) return c.focus(); }
-      if (clients.openWindow) return clients.openWindow('/');
-    })
-  );
+  const target = (event.notification && event.notification.data && event.notification.data.click_action) || '/';
+  event.waitUntil((async () => {
+    const list = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of list) {
+      // Reuse any visible client
+      if ('focus' in c) return c.focus();
+    }
+    if (clients.openWindow) return clients.openWindow(target);
+  })());
+});
+
+// Allow page to request an immediate SW activation after update
+// usage from page: navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'})
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
