@@ -1,11 +1,10 @@
 [build]
   publish = "."
-  command = "bash scripts/inject-firebase.sh"
+  command = "bash -euxo pipefail ./scripts/inject-firebase.sh"
 
 [build.environment]
   SECRETS_SCAN_ENABLED = "false"
 
-# -------- Your headers (unchanged) --------
 [[headers]]
   for = "/*"
   [headers.values]
