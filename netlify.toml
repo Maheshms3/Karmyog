@@ -1,5 +1,11 @@
-# Netlify config
-# Security + sensible defaults for all files
+[build]
+  publish = "."
+  command = "bash scripts/inject-firebase.sh"
+
+[build.environment]
+  SECRETS_SCAN_ENABLED = "false"
+
+# -------- Your headers (unchanged) --------
 [[headers]]
   for = "/*"
   [headers.values]
@@ -8,20 +14,17 @@
   Referrer-Policy = "strict-origin-when-cross-origin"
   Permissions-Policy = "geolocation=(), microphone=(), camera=()"
 
-# Correct MIME for the web manifest
 [[headers]]
   for = "/manifest.json"
   [headers.values]
   Content-Type = "application/manifest+json"
   Cache-Control = "public, max-age=3600"
 
-# Don’t aggressively cache the service worker itself
 [[headers]]
   for = "/service-worker.js"
   [headers.values]
   Cache-Control = "no-cache"
 
-# Help crawlers: cache but not too long
 [[headers]]
   for = "/sitemap.xml"
   [headers.values]
