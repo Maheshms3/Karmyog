@@ -276,15 +276,15 @@
       setTheme(saved ? saved === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches));
     })();
 
-    const firebaseConfig = {
-      apiKey: '%%FIREBASE_API_KEY%%',
-      authDomain: '%%FIREBASE_AUTH_DOMAIN%%',
-      projectId: '%%FIREBASE_PROJECT_ID%%',
-      storageBucket: '%%FIREBASE_STORAGE_BUCKET%%',
-      messagingSenderId: '%%FIREBASE_MESSAGING_SENDER_ID%%',
-      appId: '%%FIREBASE_APP_ID%%',
-      measurementId: '%%FIREBASE_MEASUREMENT_ID%%'
-    };
+const firebaseConfig = {
+  apiKey: '%%FIREBASE_API_KEY%%',
+  authDomain: '%%FIREBASE_AUTH_DOMAIN%%',
+  projectId: '%%FIREBASE_PROJECT_ID%%',
+  storageBucket: '%%FIREBASE_STORAGE_BUCKET%%',
+  messagingSenderId: '%%FIREBASE_MESSAGING_SENDER_ID%%',
+  appId: '%%FIREBASE_APP_ID%%',
+  measurementId: '%%FIREBASE_MEASUREMENT_ID%%'
+};
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -347,12 +347,25 @@
 
     // --- Helpers ---
     const makeId = () => (crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+    // Persisted daily "once" helpers (for end-of-day toast)
+    function getDayKey(prefix){ return `${prefix}:${localDateISO()}`; }
+    function oncePerDay(prefix, fn){
+      try{
+        const key = getDayKey(prefix);
+        const seen = localStorage.getItem(key);
+        if (seen) return false;
+        fn();
+        localStorage.setItem(key, '1');
+        return true;
+      }catch(e){ fn(); return true; }
+    }
 
     // --- App State ---
     let state = {};
     let unsubscribe;
     let pendingFinalDailyKarma = null;
     let confirmAction = null;
+    let _queuedSummaryShown = false; // one-per-session guard
 
     const defaultState = {
       totalKarma: 0,
@@ -845,8 +858,11 @@
         <button id="close-summary-btn" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg">Continue</button>`;
       dom.summaryModal.classList.remove('hidden');
 
-      document.getElementById('close-summary-btn').onclick = () => {
+      // Always (re)bind, once
+      const closeBtn = document.getElementById('close-summary-btn');
+      closeBtn?.addEventListener('click', () => {
         dom.summaryModal.classList.add('hidden');
+
         if (typeof opts.onContinue === 'function') {
           opts.onContinue();
           return;
@@ -864,7 +880,14 @@
         } else {
           finalizeDay(finalDailyKarma);
         }
-      };
+      }, { once: true });
+
+      // UX: close with ESC or clicking backdrop
+      const escHandler = (e) => { if (e.key === 'Escape') { closeBtn?.click(); } };
+      document.addEventListener('keydown', escHandler, { once: true });
+      dom.summaryModal.addEventListener('click', (e) => {
+        if (e.target === dom.summaryModal) { closeBtn?.click(); }
+      }, { once: true });
     }
 
     function showSummaryOnlyQueued(ps) {
@@ -872,7 +895,11 @@
         title: `Yesterday Complete (${ps.dateISO})`,
         earned: ps.earned || 0,
         negatives: ps.negatives || 0,
-        onContinue: () => {
+        onContinue: async () => {
+          // clear queued summary only AFTER user continues
+          delete state.pendingSummary;
+          await deleteFieldOnUserDoc('pendingSummary');
+
           // After acknowledging yesterday, ask for Prayashchit if needed (add to *today*)
           if (state.pendingPrayashchit) {
             renderPrayashchitOptions();
@@ -888,6 +915,8 @@
               await deleteFieldOnUserDoc('pendingPrayashchit');
               saveState();
             });
+          } else {
+            saveState();
           }
         }
       });
@@ -901,11 +930,11 @@
     }
 
     function maybeShowQueuedSummary() {
+      if (_queuedSummaryShown) return; // session guard
       const ps = state.pendingSummary;
       if (!ps) return;
-      // delete flag before showing so it cannot resurrect
-      delete state.pendingSummary;
-      deleteFieldOnUserDoc('pendingSummary');
+      _queuedSummaryShown = true;
+      // do NOT delete pendingSummary here; delete after user continues
       showSummaryOnlyQueued(ps);
     }
 
@@ -1049,12 +1078,15 @@
       const edt = parseHM((state.settings||{}).endDayTime);
       if (edt) {
         const endKey = markKey('endday','remind');
-        // Toast/notification at end time should respect reminders toggle
+        // Toast/notification at end time should respect reminders toggle,
+        // and show only once per day even across reloads
         if (allowTaskReminders && !alreadyReminded.has(endKey) && Math.abs(now - edt.getTime()) < 60*1000) {
           alreadyReminded.add(endKey);
-          vibrateSoft();
-          showMessage('Time to wrap up your day. Review & complete tasks.', 'info');
-          maybeNotify('Day Wrap-Up', 'Review today’s tasks now.');
+          oncePerDay('endday-toast', () => {
+            vibrateSoft();
+            showMessage('Time to wrap up your day. Review & complete tasks.', 'info');
+            maybeNotify('Day Wrap-Up', 'Review today’s tasks now.');
+          });
           state._autoFinalizeAt = edt.getTime() + (state.settings.autoFinalizeAfterMins||30)*60*1000;
           saveState();
         }
