@@ -62,6 +62,52 @@
 
     /* No bottom nav now, so no extra spacing */
     .with-bottom-nav { padding-bottom: 0; }
+
+/* Peacock feather guide button — apply to the element that opens your guide/help */
+#assistant-toggle, /* change or keep if your guide button has this id */
+#guide-btn,
+.guide-btn {
+  position: fixed;
+  right: 1rem;
+  bottom: 5.5rem;            /* sits above the Install PWA button */
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+  z-index: 110;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  background: radial-gradient(circle at 50% 38%, #1cc5c9 0 16%, #2b7cbd 17% 26%, #8146d8 27% 33%, transparent 34%) center/100% 100%,
+              /* feather vane gradient underlay for depth */
+              linear-gradient(140deg, #27e0a8 0%, #06b6d4 40%, #6366f1 85%) ;
+  /* overlay an SVG quill stem + barbs so it looks like a peacock feather */
+  -webkit-mask: url("data:image/svg+xml;utf8,\
+  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>\
+    <path d='M34 56c-7-10-9-20-5-26 5-8 15-6 24-16-7 13-11 11-16 18-4 6-1 14 3 22' fill='black'/>\
+    <path d='M12 26c10-3 18-1 24 2M10 32c11-2 19 0 25 4M12 38c10-1 18 2 23 6' stroke='black' stroke-width='6' stroke-linecap='round' fill='none'/>\
+  </svg>") center / 88% 88% no-repeat;
+  mask: url("data:image/svg+xml;utf8,\
+  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>\
+    <path d='M34 56c-7-10-9-20-5-26 5-8 15-6 24-16-7 13-11 11-16 18-4 6-1 14 3 22' fill='black'/>\
+    <path d='M12 26c10-3 18-1 24 2M10 32c11-2 19 0 25 4M12 38c10-1 18 2 23 6' stroke='black' stroke-width='6' stroke-linecap='round' fill='none'/>\
+  </svg>") center / 88% 88% no-repeat;
+  transition: transform .15s ease, box-shadow .15s ease, filter .2s ease;
+}
+.dark #assistant-toggle,
+.dark #guide-btn,
+.dark .guide-btn {
+  /* slightly deeper hues for dark mode pop */
+  background: radial-gradient(circle at 50% 38%, #17b3b7 0 16%, #1f6cab 17% 26%, #6f3ac4 27% 33%, transparent 34%) center/100% 100%,
+              linear-gradient(140deg, #1ccaa0 0%, #0891b2 40%, #4f46e5 85%);
+}
+#assistant-toggle:hover,
+#guide-btn:hover,
+.guide-btn:hover {
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 10px 28px rgba(0,0,0,.22);
+  filter: saturate(1.1);
+}
+
   </style>
 </head>
 
@@ -1371,4 +1417,5 @@ const firebaseConfig = {
 
 </body>
 </html>
+
 
