@@ -1,0 +1,24 @@
+/* assistant.css */
+.assistant-fab {
+  position: fixed; right: 16px; bottom: 76px; z-index: 60;
+  border: 0; border-radius: 9999px; padding: 12px 14px; cursor: pointer;
+  background: #0ea5e9; color: white; font-weight: 700;
+  box-shadow: 0 8px 24px rgba(2,132,199,.35);
+}
+.assistant-panel {
+  position: fixed; right: 16px; bottom: 16px; z-index: 60;
+  width: 360px; max-width: calc(100vw - 32px);
+  background: var(--assistant-bg, #0f172a); color: #e2e8f0;
+  border-radius: 16px; box-shadow: 0 12px 30px rgba(0,0,0,.35);
+  overflow: hidden; display: none;
+}
+.assistant-panel header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; background: rgba(148,163,184,.15);
+}
+.assistant-body { padding: 12px 14px; max-height: 48vh; overflow:auto; }
+.assistant-footer { padding: 10px 12px; background: rgba(148,163,184,.08); }
+.assistant-note { font-size: 12px; opacity: .8; margin-top: 6px; }
+.krishna {
+  font-style: italic; opacity: .95;
+}
