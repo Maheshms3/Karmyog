@@ -20,6 +20,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
+  <!-- Assistant styles (moved inside head) -->
+  <link rel="stylesheet" href="./assistant.css" />
+
   <style>
     body { font-family: 'Inter', sans-serif; user-select: none; overflow-x: hidden; }
     .karma-item { transition: opacity 0.5s ease, transform 0.5s ease; position: relative; }
@@ -366,6 +369,7 @@ const firebaseConfig = {
     let pendingFinalDailyKarma = null;
     let confirmAction = null;
     let _queuedSummaryShown = false; // one-per-session guard
+    let __summaryOpen = false; // prevents the queued summary from flashing/reopening
 
     const defaultState = {
       totalKarma: 0,
@@ -890,37 +894,44 @@ const firebaseConfig = {
       }, { once: true });
     }
 
-    function showSummaryOnlyQueued(ps) {
-      showSummaryModal(ps.finalDailyKarma, ps.missedCount, {
-        title: `Yesterday Complete (${ps.dateISO})`,
-        earned: ps.earned || 0,
-        negatives: ps.negatives || 0,
-        onContinue: async () => {
-          // clear queued summary only AFTER user continues
-          delete state.pendingSummary;
-          await deleteFieldOnUserDoc('pendingSummary');
+  function showSummaryOnlyQueued(ps) {
+  showSummaryModal(ps.finalDailyKarma, ps.missedCount, {
+    title: `Yesterday Complete (${ps.dateISO})`,
+    earned: ps.earned || 0,
+    negatives: ps.negatives || 0,
+    onContinue: async () => {
+      // 1) Clear pending summary only AFTER user continues
+      delete state.pendingSummary;
+      await deleteFieldOnUserDoc('pendingSummary');
 
-          // After acknowledging yesterday, ask for Prayashchit if needed (add to *today*)
-          if (state.pendingPrayashchit) {
-            renderPrayashchitOptions();
-            dom.prayashchitModal.classList.remove('hidden');
-            setPrayashchitHandler(async () => {
-              const selected = document.querySelector('input[name="prayashchit"]:checked');
-              const choice = selected ? selected.value : null;
-              closeModal('prayashchit-modal');
-              if (choice) {
-                state.dailyActions.push({ id: makeId(), name: choice, type: 'prayashchit', goalId: null, order: 0 });
-              }
-              delete state.pendingPrayashchit;
-              await deleteFieldOnUserDoc('pendingPrayashchit');
-              saveState();
-            });
-          } else {
-            saveState();
+      // If Prayashchit is pending, ask once, then refresh
+      if (state.pendingPrayashchit) {
+        renderPrayashchitOptions();
+        dom.prayashchitModal.classList.remove('hidden');
+        setPrayashchitHandler(async () => {
+          const selected = document.querySelector('input[name="prayashchit"]:checked');
+          const choice = selected ? selected.value : null;
+          closeModal('prayashchit-modal');
+          if (choice) {
+            state.dailyActions.push({ id: makeId(), name: choice, type: 'prayashchit', goalId: null, order: 0 });
           }
-        }
-      });
+          delete state.pendingPrayashchit;
+          await deleteFieldOnUserDoc('pendingPrayashchit');
+          saveState();
+
+          // 2) Mark acknowledged and hard refresh to a clean UI state
+          try { localStorage.setItem('karmyog:ack:' + ps.dateISO, '1'); } catch (e) {}
+          window.location.reload();
+        });
+      } else {
+        // No Prayashchit: just save and refresh
+        saveState();
+        try { localStorage.setItem('karmyog:ack:' + ps.dateISO, '1'); } catch (e) {}
+        window.location.reload();
+      }
     }
+  });
+}
 
     // --- Queued Summary state ---
     function queueSummary({ finalDailyKarma, missedCount, dateISO, earned = 0, negatives = 0 }) {
@@ -929,14 +940,23 @@ const firebaseConfig = {
       saveState();
     }
 
-    function maybeShowQueuedSummary() {
-      if (_queuedSummaryShown) return; // session guard
-      const ps = state.pendingSummary;
-      if (!ps) return;
-      _queuedSummaryShown = true;
-      // do NOT delete pendingSummary here; delete after user continues
-      showSummaryOnlyQueued(ps);
-    }
+   function maybeShowQueuedSummary() {
+  // Open only once per session
+  if (__summaryOpen) return;
+
+  const ps = state.pendingSummary;
+  if (!ps) return;
+
+  // If we already acknowledged this same date in this browser, don't reopen.
+  try {
+    const ackKey = 'karmyog:ack:' + ps.dateISO;
+    if (localStorage.getItem(ackKey)) return;
+  } catch (e) {}
+
+  __summaryOpen = true;
+  // do NOT delete pendingSummary here; delete after user continues
+  showSummaryOnlyQueued(ps);
+}
 
     // Re-prompt Prayashchit if left pending (fix #3)
     function maybePromptPrayashchitResidue(){
@@ -1346,6 +1366,9 @@ const firebaseConfig = {
       deferredPrompt = null;
     });
   </script>
+<!-- Load Assistant after your main script so it can use globals -->
+<script src="./assistant.js"></script>
 
 </body>
 </html>
+
