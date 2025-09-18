@@ -20,9 +20,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-  <!-- Assistant styles (moved inside head) -->
-  <link rel="stylesheet" href="./assistant.css" />
-
   <style>
     body { font-family: 'Inter', sans-serif; user-select: none; overflow-x: hidden; }
     .karma-item { transition: opacity 0.5s ease, transform 0.5s ease; position: relative; }
@@ -1412,10 +1409,9 @@ const firebaseConfig = {
       deferredPrompt = null;
     });
   </script>
-<!-- Load Assistant after your main script so it can use globals -->
-<script src="./assistant.js"></script>
 
 </body>
 </html>
+
 
 
